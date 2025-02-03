@@ -8,6 +8,13 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
+tucana = { version = "0.0.17", features = ["all"] }
+tokio = "1.43.0"
+async-trait = "0.1.85"
+log = "0.4.24"
+redis = { version = "0.28.0", features = ["aio"] }
+serde_json = "1.0.138"
+rabbitmq-stream-client = "0.7.0"
 
 [lib]
 doctest = true
