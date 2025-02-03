@@ -1,6 +1,18 @@
 [package]
+version = "0.0.0"
 name = "code0-flow"
-version = "0.1.0"
 edition = "2021"
+description = "Crate for managing the code0-flows inside of the Flow Queue & FlowStore"
+repository = "https://github.com/code0-tech/code0-flow"
+homepage = "https://code0.tech"
+license = "Apache-2.0"
 
 [dependencies]
+
+[lib]
+doctest = true
+
+[features]
+flow_queue = []
+flow_store = []
+all = ["flow_queue", "flow_store"]
