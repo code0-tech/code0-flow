@@ -1,5 +1,10 @@
 use std::ops::Add;
 
+pub struct QueueName {
+    pub prefix: QueuePrefix,
+    pub protocol: QueueProtocol,
+}
+
 /// # Queue Prefix
 /// - Every incoming message will have the `Send` prefix
 /// - Every processed message (answer) from taurus will have the `Receive` prefix
@@ -16,12 +21,11 @@ pub enum QueueProtocol {
 
 /// Implementation to turn a protocol into a str
 impl QueueProtocol {
-
     /// Function to turn a protocol into a str
     ///
     /// # Example:
     /// ```
-    /// use code0_flow::flow_queue::service::QueueProtocol;
+    /// use code0_flow::flow_queue::name::QueueProtocol;
     /// let proto_str = QueueProtocol::Rest.as_str().to_string();
     /// let result = "REST".to_string();
     ///
@@ -43,7 +47,7 @@ impl Add<QueueProtocol> for QueuePrefix {
     ///
     /// # Example:
     /// ```
-    /// use code0_flow::flow_queue::service::{QueuePrefix, QueueProtocol};
+    /// use code0_flow::flow_queue::name::{QueuePrefix, QueueProtocol};
     /// let send_rest_queue_name = QueuePrefix::Send + QueueProtocol::Rest;
     /// let result = "S_REST".to_string();
     ///

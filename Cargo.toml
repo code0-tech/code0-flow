@@ -14,7 +14,7 @@ async-trait = "0.1.85"
 log = "0.4.24"
 redis = { version = "0.28.0", features = ["aio", "tokio-comp", "async-std-comp"] }
 serde_json = "1.0.138"
-rabbitmq-stream-client = "0.7.0"
+lapin = "2.5.0"
 
 [lib]
 doctest = true

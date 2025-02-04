@@ -1,41 +1,23 @@
-use rabbitmq_stream_client::Environment;
+use lapin::{Channel, Connection, ConnectionProperties};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub type FlowQueue = Arc<Mutex<Box<Environment>>>;
+pub type FlowQueue = Arc<Mutex<Box<Connection>>>;
 
-pub struct RedisConfiguration {
-    host: String,
-    port: u16,
-    username: String,
-    password: String,
-}
+pub type FlowChannel = Arc<Mutex<Box<Channel>>>;
 
-impl RedisConfiguration {
-    pub fn new(host: String, port: u16, username: String, password: String) -> Self {
-        Self {
-            host,
-            port,
-            username,
-            password,
-        }
+pub async fn connect(uri: &str) -> Connection {
+    match Connection::connect(uri, ConnectionProperties::default()).await {
+        Ok(env) => env,
+        Err(error) => panic!("Cannot connect to redis instance! Reason: {:?}", error),
     }
 }
 
-pub async fn init_rabbitmq(redis_configuration: RedisConfiguration) -> FlowQueue {
-    Arc::new(Mutex::new(Box::new(connect(redis_configuration).await)))
-}
+pub async fn get_flow_channel(uri: &str) -> FlowChannel {
+    let connection = connect(uri).await;
 
-async fn connect(redis_configuration: RedisConfiguration) -> Environment {
-    match Environment::builder()
-        .host(&*redis_configuration.host)
-        .port(redis_configuration.port)
-        .username(&*redis_configuration.username)
-        .password(&*redis_configuration.password)
-        .build()
-        .await
-    {
-        Ok(env) => env,
-        Err(error) => panic!("Cannot connect to redis instance! Reason: {:?}", error),
+    match connection.create_channel().await {
+        Ok(channel) => Arc::new(Mutex::new(Box::new(channel))),
+        Err(error) => panic!("Cannot create channel {:?}", error),
     }
 }
