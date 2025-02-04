@@ -30,9 +30,7 @@ pub async fn declare_queues(flow_channel: FlowChannel, names: Vec<QueueName>) {
                 info!("Declared queue: {}", channel_name)
             }
             Err(error) => {
-                let str = format!("Cannot declare queue: {}, Reason: {}", channel_name, error);
-                error!(str);
-                panic!(str)
+                panic!("Cannot declare queue: {}, Reason: {}", channel_name, error);
             }
         };
     }
@@ -77,33 +75,4 @@ pub async fn consume_message(channel: FlowChannel, queue_protocol: QueueProtocol
         .unwrap();
 
     consumer.set_delegate(SendQueueDelegate);
-}
-
-struct SendQueueDelegate;
-
-impl ConsumerDelegate for SendQueueDelegate {
-    fn on_new_delivery(
-        &self,
-        delivery: DeliveryResult,
-    ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        let optional_delivery = match delivery {
-            Ok(option) => option,
-            Err(error) => {
-                todo!("")
-            }
-        };
-
-        let delivery = match optional_delivery {
-            Some(del) => del,
-            None => {
-                todo!("")
-            }
-        };
-
-        todo!()
-    }
-
-    fn drop_prefetched_messages(&self) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        todo!()
-    }
 }
