@@ -1,32 +1,68 @@
-use lapin::message::{DeliveryResult};
+use lapin::message::{Delivery, DeliveryResult};
 use lapin::ConsumerDelegate;
+use log::debug;
 use std::future::Future;
 use std::pin::Pin;
 
-struct QueueDelegate;
+/// Delegate trait to implement.
+///
+/// Use as delegate for RabbitMQ
+///
+/// # Example
+/// ```
+/// use lapin::message::Delivery;
+/// use code0_flow::flow_queue::delegate::Delegate;
+///
+/// struct HttpDelegate;
+///
+/// impl Delegate for HttpDelegate {
+///     fn handle_delivery(&self, delivery: Delivery) {
+///         todo!("Handle delivery!")
+///     }
+/// }
+/// ```
+pub trait Delegate {
+    fn handle_delivery(&self, delivery: Delivery);
+}
 
-impl ConsumerDelegate for QueueDelegate {
+pub struct QueueDelegate<T: Delegate> {
+    pub delegate: T,
+}
+
+impl<T: Delegate> QueueDelegate<T> {
+    pub fn new(delegate: T) -> Self {
+        QueueDelegate { delegate }
+    }
+
+    pub fn deliver(&self, delivery: Delivery) {
+        self.delegate.handle_delivery(delivery);
+    }
+}
+
+impl<T: Delegate> ConsumerDelegate for QueueDelegate<T> {
     fn on_new_delivery(
         &self,
         delivery: DeliveryResult,
     ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        let optional_delivery = match delivery {
-            Ok(option) => option,
-            Err(error) => {
-                todo!("error handling")
-            }
-        };
+        async move {
+            let optional_delivery = match delivery {
+                Ok(option) => option,
+                Err(_) => return,
+            };
+            let delivery = match optional_delivery {
+                Some(del) => del,
+                None => return,
+            };
 
-        let delivery = match optional_delivery {
-            Some(del) => del,
-            None => {
-                todo!("error handling")
-            }
-        };
-        todo!("consumer shoud consume the data of delivy as &Vec<u8>")
+            self.delegate.handle_delivery(delivery);
+        }
     }
 
     fn drop_prefetched_messages(&self) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-        todo!("")
+        let future = async move {
+            debug!("Dropping prefetched messages...");
+        };
+
+        Box::pin(future)
     }
 }

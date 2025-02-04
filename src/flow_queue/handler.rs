@@ -1,4 +1,5 @@
 use crate::flow_queue::connection::{get_flow_channel, FlowChannel, FlowQueue};
+use crate::flow_queue::delegate::{Delegate, QueueDelegate};
 use crate::flow_queue::name::{QueueName, QueuePrefix, QueueProtocol};
 use lapin::message::{Delivery, DeliveryResult};
 use lapin::options::{BasicConsumeOptions, BasicPublishOptions, QueueDeclareOptions};
@@ -36,6 +37,7 @@ pub async fn declare_queues(flow_channel: FlowChannel, names: Vec<QueueName>) {
     }
 }
 
+/// Sends a message into a queue
 pub async fn send_message(
     flow_channel: FlowChannel,
     queue_name: QueueName,
@@ -60,19 +62,59 @@ pub async fn send_message(
     }
 }
 
-pub async fn consume_message(channel: FlowChannel, queue_protocol: QueueProtocol) {
-    let name = QueuePrefix::Send + queue_protocol;
+/// Consumes a message
+///
+/// Creates a delegate that waits on messages and consumes them.
+///
+/// # Params
+/// - channel: FlowChannel of the send message
+/// - queue_name: Name of the Queue that should be listened to
+/// - delegate: Consumer delegate of the message
+///
+/// # Example
+/// ```
+/// use lapin::message::Delivery;
+/// use code0_flow::flow_queue::delegate::Delegate;
+/// use code0_flow::flow_queue::connection::get_flow_channel;
+/// use code0_flow::flow_queue::name::{QueueName, QueuePrefix, QueueProtocol};
+/// use code0_flow::flow_queue::handler::consume_message;
+///
+/// struct HttpDelegate;
+///
+/// impl Delegate for HttpDelegate {
+///     fn handle_delivery(&self, delivery: Delivery) {
+///         todo!("Handle delivery!")
+///     }
+/// }
+///
+/// async fn main() {
+///     let uri = "abc";
+///     let channel = get_flow_channel(uri).await;
+///     let queue_name = QueueName {
+///         prefix: QueuePrefix::Send,
+///         protocol: QueueProtocol::Rest,
+///     };
+///
+///     consume_message(channel, queue_name, HttpDelegate).await;
+/// }
+/// ```
+pub async fn consume_message<T: Delegate>(
+    channel: FlowChannel,
+    queue_name: QueueName,
+    delegate: T,
+) {
+    let name = queue_name.prefix + queue_name.protocol;
     let channel_arc = channel.lock().await;
 
     let mut consumer = channel_arc
         .basic_consume(
             &*name,
-            "my_consumer",
+            "",
             BasicConsumeOptions::default(),
             FieldTable::default(),
         )
         .await
         .unwrap();
 
-    consumer.set_delegate(SendQueueDelegate);
+    consumer.set_delegate(QueueDelegate { delegate });
 }
