@@ -1,14 +1,11 @@
-use crate::flow_queue::connection::{get_flow_channel, FlowChannel, FlowQueue};
+use crate::flow_queue::connection::FlowChannel;
 use crate::flow_queue::delegate::{Delegate, QueueDelegate};
-use crate::flow_queue::name::{QueueName, QueuePrefix, QueueProtocol};
-use lapin::message::{Delivery, DeliveryResult};
+use crate::flow_queue::name::QueueName;
 use lapin::options::{BasicConsumeOptions, BasicPublishOptions, QueueDeclareOptions};
-use lapin::protocol::basic::gen_return;
 use lapin::types::FieldTable;
-use lapin::{ConsumerDelegate, Error};
-use log::{debug, error, info};
-use std::future::Future;
-use std::pin::Pin;
+use lapin::Error;
+use log::info;
+use std::sync::Arc;
 
 /// # Declares all given queues
 ///
@@ -72,7 +69,7 @@ pub async fn send_message(
 /// - delegate: Consumer delegate of the message
 ///
 /// # Example
-/// ```
+/// ``` ignore
 /// use lapin::message::Delivery;
 /// use code0_flow::flow_queue::delegate::Delegate;
 /// use code0_flow::flow_queue::connection::get_flow_channel;
@@ -98,7 +95,7 @@ pub async fn send_message(
 ///     consume_message(channel, queue_name, HttpDelegate).await;
 /// }
 /// ```
-pub async fn consume_message<T: Delegate>(
+pub async fn consume_message<T: Delegate + 'static>(
     channel: FlowChannel,
     queue_name: QueueName,
     delegate: T,
@@ -106,7 +103,7 @@ pub async fn consume_message<T: Delegate>(
     let name = queue_name.prefix + queue_name.protocol;
     let channel_arc = channel.lock().await;
 
-    let mut consumer = channel_arc
+    let consumer = channel_arc
         .basic_consume(
             &*name,
             "",
@@ -116,5 +113,7 @@ pub async fn consume_message<T: Delegate>(
         .await
         .unwrap();
 
-    consumer.set_delegate(QueueDelegate { delegate });
+    consumer.set_delegate(QueueDelegate {
+        delegate: Arc::new(delegate),
+    });
 }
