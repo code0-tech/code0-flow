@@ -16,6 +16,9 @@ redis = { version = "0.28.0", features = ["aio", "tokio-comp", "async-std-comp"]
 serde_json = "1.0.138"
 lapin = "2.5.0"
 
+[dev-dependencies]
+testcontainers = "0.23.2"
+
 [lib]
 doctest = true
 

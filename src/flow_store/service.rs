@@ -1,12 +1,8 @@
 use async_trait::async_trait;
 use log::{debug, error};
-use redis::aio::MultiplexedConnection;
 use redis::{AsyncCommands, RedisError};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tucana::sagittarius::{Flow, Flows};
-
-pub type FlowStore = Arc<Mutex<MultiplexedConnection>>;
+use crate::flow_store::connection::FlowStore;
 
 #[derive(Debug)]
 pub struct FlowStoreError {
