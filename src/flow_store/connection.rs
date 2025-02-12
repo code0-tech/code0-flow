@@ -1,11 +1,26 @@
-use redis::Client;
+use std::sync::Arc;
+use redis::aio::MultiplexedConnection;
+use redis::{Client, RedisResult};
+use tokio::sync::Mutex;
 
-pub fn build_connection(redis_url: String) -> Client {
+pub type FlowStore = Arc<Mutex<Box<MultiplexedConnection>>>;
+
+fn build_connection(redis_url: String) -> Client {
     match Client::open(redis_url) {
         Ok(client) => client,
-        Err(con_error) => panic!("{}", con_error),
+        Err(con_error) => panic!("Cannot create FlowStore (Redis) connection! Reason: {}", con_error),
     }
 }
+
+pub async fn create_flow_store_connection(url: String) -> FlowStore {
+    let client = match build_connection(url).get_multiplexed_async_connection().await  {
+        Ok(connection) => connection,
+        Err(error) => panic!("Cannot create FlowStore (Redis) connection! Reason: {}", error),
+    };
+    
+    Arc::new(Mutex::new(Box::new(client)))
+}
+
 
 #[cfg(test)]
 mod tests {
