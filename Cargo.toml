@@ -18,6 +18,7 @@ lapin = "2.5.0"
 
 [dev-dependencies]
 testcontainers = "0.23.2"
+serial_test = "3.2.0"
 
 [lib]
 doctest = true
