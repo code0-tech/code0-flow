@@ -122,11 +122,11 @@ impl RabbitmqClient {
     }
 
     // Receive messages from a queue
-    pub async fn await_message(
+    // Receive messages from a queue with no timeout
+    pub async fn await_message_no_timeout(
         &self,
         queue_name: &str,
         message_id: String,
-        timeout: Duration,
         ack_on_success: bool,
     ) -> Result<Message, RabbitMqError> {
         let mut consumer = {
@@ -149,53 +149,64 @@ impl RabbitmqClient {
 
         debug!("Starting to consume from {}", queue_name);
 
-        // Create a future for the next message
-        let receive_future = async {
-            while let Some(delivery_result) = consumer.next().await {
-                let delivery = match delivery_result {
-                    Ok(del) => del,
-                    Err(_) => return Err(RabbitMqError::DeserializationError),
-                };
-                let data = &delivery.data;
-                let message_str = match std::str::from_utf8(&data) {
-                    Ok(str) => str,
-                    Err(_) => {
-                        return Err(RabbitMqError::DeserializationError);
-                    }
-                };
-
-                debug!("Received message: {}", message_str);
-
-                // Parse the message
-                let message = match serde_json::from_str::<Message>(message_str) {
-                    Ok(m) => m,
-                    Err(e) => {
-                        log::error!("Failed to parse message: {}", e);
-                        return Err(RabbitMqError::DeserializationError);
-                    }
-                };
-
-                if message.message_id == message_id {
-                    if ack_on_success {
-                        delivery
-                            .ack(lapin::options::BasicAckOptions::default())
-                            .await
-                            .expect("Failed to acknowledge message");
-                    }
-
-                    return Ok(message);
+        while let Some(delivery_result) = consumer.next().await {
+            let delivery = match delivery_result {
+                Ok(del) => del,
+                Err(_) => return Err(RabbitMqError::DeserializationError),
+            };
+            let data = &delivery.data;
+            let message_str = match std::str::from_utf8(&data) {
+                Ok(str) => str,
+                Err(_) => {
+                    return Err(RabbitMqError::DeserializationError);
                 }
-            }
-            Err(RabbitMqError::DeserializationError)
-        };
+            };
 
-        // Set a timeout of 10 seconds
-        match tokio::time::timeout(timeout, receive_future).await {
+            debug!("Received message: {}", message_str);
+
+            // Parse the message
+            let message = match serde_json::from_str::<Message>(message_str) {
+                Ok(m) => m,
+                Err(e) => {
+                    log::error!("Failed to parse message: {}", e);
+                    return Err(RabbitMqError::DeserializationError);
+                }
+            };
+
+            if message.message_id == message_id {
+                if ack_on_success {
+                    delivery
+                        .ack(lapin::options::BasicAckOptions::default())
+                        .await
+                        .expect("Failed to acknowledge message");
+                }
+
+                return Ok(message);
+            }
+        }
+        Err(RabbitMqError::DeserializationError)
+    }
+
+    // Receive messages from a queue with timeout
+    pub async fn await_message(
+        &self,
+        queue_name: &str,
+        message_id: String,
+        timeout: Duration,
+        ack_on_success: bool,
+    ) -> Result<Message, RabbitMqError> {
+        // Set a timeout
+        match tokio::time::timeout(
+            timeout,
+            self.await_message_no_timeout(queue_name, message_id, ack_on_success),
+        )
+        .await
+        {
             Ok(result) => result,
             Err(_) => {
                 debug!(
                     "Timeout waiting for message after {} seconds",
-                    timeout.as_millis() / 1000
+                    timeout.as_secs()
                 );
                 Err(RabbitMqError::TimeoutError)
             }
