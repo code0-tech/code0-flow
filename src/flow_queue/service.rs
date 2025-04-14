@@ -188,11 +188,11 @@ impl RabbitmqClient {
     }
 
     // Function intended to get used by the runtime
-    pub async fn consume_message(
+    pub async fn receive_messages(
         &self,
         queue_name: &str,
-        ack_on_success: bool,
-    ) -> Result<Message, RabbitMqError> {
+        handle_message: fn(Message) -> Result<Message, lapin::Error>,
+    ) -> Result<(), lapin::Error> {
         let mut consumer = {
             let channel = self.channel.lock().await;
 
@@ -200,7 +200,7 @@ impl RabbitmqClient {
                 .basic_consume(
                     queue_name,
                     "consumer",
-                    lapin::options::BasicConsumeOptions::default(),
+                    BasicConsumeOptions::default(),
                     FieldTable::default(),
                 )
                 .await;
@@ -211,42 +211,67 @@ impl RabbitmqClient {
             }
         };
 
-        debug!("Starting to consume from {}", queue_name);
+        println!("Starting to consume from {}", queue_name);
 
-        while let Some(delivery_result) = consumer.next().await {
-            let delivery = match delivery_result {
+        while let Some(delivery) = consumer.next().await {
+            let delivery = match delivery {
                 Ok(del) => del,
-                Err(_) => return Err(RabbitMqError::DeserializationError),
+                Err(err) => {
+                    println!("Error receiving message: {}", err);
+                    return Err(err);
+                }
             };
+
             let data = &delivery.data;
             let message_str = match std::str::from_utf8(&data) {
-                Ok(str) => str,
-                Err(_) => {
-                    return Err(RabbitMqError::DeserializationError);
+                Ok(str) => {
+                    println!("Received message: {}", str);
+                    str
+                }
+                Err(err) => {
+                    println!("Error decoding message: {}", err);
+                    return Ok(());
                 }
             };
-
-            debug!("Received message: {}", message_str);
-
             // Parse the message
             let message = match serde_json::from_str::<Message>(message_str) {
-                Ok(m) => m,
-                Err(e) => {
-                    log::error!("Failed to parse message: {}", e);
-                    return Err(RabbitMqError::DeserializationError);
+                Ok(mess) => {
+                    println!("Parsed message with telegram_id: {}", mess.message_id);
+                    mess
+                }
+                Err(err) => {
+                    println!("Error parsing message: {}", err);
+                    return Ok(());
                 }
             };
 
-            if ack_on_success {
-                delivery
-                    .ack(lapin::options::BasicAckOptions::default())
-                    .await
-                    .expect("Failed to acknowledge message");
+            let message = match handle_message(message) {
+                Ok(mess) => {
+                    println!("Handled message with telegram_id: {}", mess.message_id);
+                    mess
+                }
+                Err(err) => {
+                    println!("Error handling message: {}", err);
+                    return Ok(());
+                }
+            };
+
+            let message_json = serde_json::to_string(&message).unwrap();
+
+            println!("{}", message_json);
+
+            {
+                self.send_message(message_json, "recieve_queue").await;
             }
 
-            return Ok(message);
+            // Acknowledge the message
+            delivery
+                .ack(BasicAckOptions::default())
+                .await
+                .expect("Failed to acknowledge message");
         }
-        Err(RabbitMqError::DeserializationError)
+
+        Ok(())
     }
 
     // Receive messages from a queue with timeout
