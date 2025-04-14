@@ -1,7 +1,11 @@
 use std::{sync::Arc, time::Duration};
 
 use futures_lite::StreamExt;
-use lapin::{options::QueueDeclareOptions, types::FieldTable, Channel};
+use lapin::{
+    options::{BasicConsumeOptions, QueueDeclareOptions},
+    types::FieldTable,
+    Channel,
+};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -234,7 +238,7 @@ impl RabbitmqClient {
                 }
             };
             // Parse the message
-            let message = match serde_json::from_str::<Message>(message_str) {
+            let inc_message = match serde_json::from_str::<Message>(message_str) {
                 Ok(mess) => {
                     println!("Parsed message with telegram_id: {}", mess.message_id);
                     mess
@@ -245,7 +249,7 @@ impl RabbitmqClient {
                 }
             };
 
-            let message = match handle_message(message) {
+            let message = match handle_message(inc_message) {
                 Ok(mess) => {
                     println!("Handled message with telegram_id: {}", mess.message_id);
                     mess
@@ -261,12 +265,12 @@ impl RabbitmqClient {
             println!("{}", message_json);
 
             {
-                self.send_message(message_json, "recieve_queue").await;
+                let _ = self.send_message(message_json, "recieve_queue").await;
             }
 
             // Acknowledge the message
             delivery
-                .ack(BasicAckOptions::default())
+                .ack(lapin::options::BasicAckOptions::default())
                 .await
                 .expect("Failed to acknowledge message");
         }
