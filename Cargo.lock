@@ -592,9 +592,11 @@ name = "code0-flow"
 version = "0.0.0"
 dependencies = [
  "async-trait",
+ "futures-lite 2.6.0",
  "lapin",
  "log",
  "redis",
+ "serde",
  "serde_json",
  "serial_test",
  "testcontainers",
