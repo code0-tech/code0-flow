@@ -1,6 +1,4 @@
-use lapin::{Channel, Connection, ConnectionProperties};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use lapin::Connection;
 
 pub async fn build_connection(rabbitmq_url: &str) -> Connection {
     match Connection::connect(rabbitmq_url, lapin::ConnectionProperties::default()).await {

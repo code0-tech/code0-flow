@@ -1,20 +1,18 @@
 use crate::flow_store::connection::FlowStore;
 use async_trait::async_trait;
 use log::error;
-use redis::aio::ConnectionLike;
 use redis::{AsyncCommands, JsonAsyncCommands, RedisError, RedisResult};
-use serde_json::to_string;
 use tucana::shared::{Flow, Flows};
 
 #[derive(Debug)]
 pub struct FlowStoreError {
-    kind: FlowStoreErrorKind,
-    flow_id: i64,
-    reason: String,
+    pub kind: FlowStoreErrorKind,
+    pub flow_id: i64,
+    pub reason: String,
 }
 
 #[derive(Debug)]
-enum FlowStoreErrorKind {
+pub enum FlowStoreErrorKind {
     Serialization,
     RedisOperation,
 }
@@ -164,7 +162,6 @@ mod tests {
                 let connection = create_flow_store_connection(url).await;
 
                 {
-                    use redis::AsyncCommands;
                     let mut con = connection.lock().await;
 
                     let _: () = redis::cmd("FLUSHALL")
