@@ -187,6 +187,68 @@ impl RabbitmqClient {
         Err(RabbitMqError::DeserializationError)
     }
 
+    // Function intended to get used by the runtime
+    pub async fn consume_message(
+        &self,
+        queue_name: &str,
+        ack_on_success: bool,
+    ) -> Result<Message, RabbitMqError> {
+        let mut consumer = {
+            let channel = self.channel.lock().await;
+
+            let consumer_res = channel
+                .basic_consume(
+                    queue_name,
+                    "consumer",
+                    lapin::options::BasicConsumeOptions::default(),
+                    FieldTable::default(),
+                )
+                .await;
+
+            match consumer_res {
+                Ok(consumer) => consumer,
+                Err(err) => panic!("{}", err),
+            }
+        };
+
+        debug!("Starting to consume from {}", queue_name);
+
+        while let Some(delivery_result) = consumer.next().await {
+            let delivery = match delivery_result {
+                Ok(del) => del,
+                Err(_) => return Err(RabbitMqError::DeserializationError),
+            };
+            let data = &delivery.data;
+            let message_str = match std::str::from_utf8(&data) {
+                Ok(str) => str,
+                Err(_) => {
+                    return Err(RabbitMqError::DeserializationError);
+                }
+            };
+
+            debug!("Received message: {}", message_str);
+
+            // Parse the message
+            let message = match serde_json::from_str::<Message>(message_str) {
+                Ok(m) => m,
+                Err(e) => {
+                    log::error!("Failed to parse message: {}", e);
+                    return Err(RabbitMqError::DeserializationError);
+                }
+            };
+
+            if ack_on_success {
+                delivery
+                    .ack(lapin::options::BasicAckOptions::default())
+                    .await
+                    .expect("Failed to acknowledge message");
+            }
+
+            return Ok(message);
+        }
+        Err(RabbitMqError::DeserializationError)
+    }
+
     // Receive messages from a queue with timeout
     pub async fn await_message(
         &self,
