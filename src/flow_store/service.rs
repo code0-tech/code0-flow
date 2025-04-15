@@ -109,7 +109,7 @@ impl FlowStoreServiceBase for FlowStoreService {
             match connection.keys("*").await {
                 Ok(res) => res,
                 Err(error) => {
-                    print!("Can't retrieve keys from redis. Reason: {error}");
+                    error!("Can't retrieve keys from redis. Reason: {error}");
                     return Err(error);
                 }
             }
