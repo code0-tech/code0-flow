@@ -267,13 +267,10 @@ impl RabbitmqClient {
             }
 
             // Acknowledge the message
-            match delivery
+            delivery
                 .ack(lapin::options::BasicAckOptions::default())
                 .await
-            {
-                Ok(_) => Ok(()),
-                Err(err) => log::error!("Failed to acknowledge message: {}", err),
-            }
+                .expect("Failed to acknowledge message");
         }
 
         Ok(())
