@@ -32,6 +32,7 @@ serial_test = "3.2.0"
 doctest = true
 
 [features]
+default = ["all"]
 flow_queue = []
 flow_store = []
 flow_definition = []
