@@ -187,7 +187,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             match service.insert_flow(flow.clone()).await {
@@ -255,7 +257,9 @@ mod tests {
                 r#type: "".to_string(),
                 settings: vec![],
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
                 starting_node: None,
             };
 
@@ -264,7 +268,9 @@ mod tests {
                 r#type: "".to_string(),
                 settings: vec![],
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
                 starting_node: None,
             };
 
@@ -274,7 +280,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_vec = vec![flow_one.clone(), flow_two.clone(), flow_three.clone()];
@@ -294,7 +302,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             match service.insert_flow(flow.clone()).await {
@@ -332,7 +342,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_two = Flow {
@@ -341,7 +353,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_three = Flow {
@@ -350,7 +364,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_vec = vec![flow_one.clone(), flow_two.clone(), flow_three.clone()];
@@ -381,7 +397,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_two = Flow {
@@ -390,7 +408,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_three = Flow {
@@ -399,7 +419,9 @@ mod tests {
                 settings: vec![],
                 starting_node: None,
                 data_types: vec![],
-                input_type: None,
+                input_type_identifier: None,
+                return_type_identifier: None,
+                project_id: 1,
             };
 
             let flow_vec = vec![flow_one.clone(), flow_two.clone(), flow_three.clone()];
