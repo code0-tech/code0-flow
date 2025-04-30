@@ -601,6 +601,7 @@ dependencies = [
  "serial_test",
  "testcontainers",
  "tokio",
+ "tonic",
  "tucana",
 ]
 
@@ -3059,9 +3060,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tucana"
-version = "0.0.20"
+version = "0.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39e88fda8f4b12a650904dbce5d3462ba161215a2cd5c0799c728be6747ac7fc"
+checksum = "d0dd03fcd2576f2649ef51551c2d9673f553b2fd05b37a3b7955d241c9977599"
 dependencies = [
  "prost",
  "prost-types",
