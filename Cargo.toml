@@ -25,7 +25,7 @@ futures-lite = "2.6.0"
 tonic = "0.13.0"
 
 [dev-dependencies]
-testcontainers = "0.23.2"
+testcontainers = "0.24.0"
 serial_test = "3.2.0"
 
 [lib]
