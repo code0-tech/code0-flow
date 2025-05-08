@@ -207,16 +207,16 @@ impl FlowStoreServiceBase for FlowStoreService {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::flow_store::connection::create_flow_store_connection;
     use crate::flow_store::connection::FlowStore;
+    use crate::flow_store::connection::create_flow_store_connection;
     use crate::flow_store::service::FlowStoreService;
     use crate::flow_store::service::FlowStoreServiceBase;
     use redis::{AsyncCommands, JsonAsyncCommands};
     use serial_test::serial;
+    use testcontainers::GenericImage;
     use testcontainers::core::IntoContainerPort;
     use testcontainers::core::WaitFor;
     use testcontainers::runners::AsyncRunner;
-    use testcontainers::GenericImage;
     use tucana::shared::FlowSetting;
     use tucana::shared::FlowSettingDefinition;
     use tucana::shared::Struct;
