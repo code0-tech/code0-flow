@@ -207,16 +207,16 @@ impl FlowStoreServiceBase for FlowStoreService {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::flow_store::connection::FlowStore;
     use crate::flow_store::connection::create_flow_store_connection;
+    use crate::flow_store::connection::FlowStore;
     use crate::flow_store::service::FlowStoreService;
     use crate::flow_store::service::FlowStoreServiceBase;
     use redis::{AsyncCommands, JsonAsyncCommands};
     use serial_test::serial;
-    use testcontainers::GenericImage;
     use testcontainers::core::IntoContainerPort;
     use testcontainers::core::WaitFor;
     use testcontainers::runners::AsyncRunner;
+    use testcontainers::GenericImage;
     use tucana::shared::FlowSetting;
     use tucana::shared::FlowSettingDefinition;
     use tucana::shared::Struct;
@@ -323,7 +323,7 @@ mod tests {
             let redis_result: Option<String> = {
                 let mut redis_cmd = connection.lock().await;
                 redis_cmd
-                    .json_get("1::1::abc.code0.tech::GET", "$")
+                    .json_get("1::1::REST::abc.code0.tech::GET", "$")
                     .await
                     .unwrap()
             };
@@ -391,7 +391,7 @@ mod tests {
             let redis_result: Vec<String> = {
                 let mut redis_cmd = connection.lock().await;
                 redis_cmd
-                    .json_get("1::1::abc.code0.tech::GET", "$")
+                    .json_get("1::1::REST::abc.code0.tech::GET", "$")
                     .await
                     .unwrap()
             };
