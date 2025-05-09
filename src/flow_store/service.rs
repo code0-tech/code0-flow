@@ -323,7 +323,7 @@ mod tests {
             let redis_result: Option<String> = {
                 let mut redis_cmd = connection.lock().await;
                 redis_cmd
-                    .json_get("1::1::abc.code0.tech::GET", "$")
+                    .json_get("1::1::REST::abc.code0.tech::GET", "$")
                     .await
                     .unwrap()
             };
@@ -391,7 +391,7 @@ mod tests {
             let redis_result: Vec<String> = {
                 let mut redis_cmd = connection.lock().await;
                 redis_cmd
-                    .json_get("1::1::abc.code0.tech::GET", "$")
+                    .json_get("1::1::REST::abc.code0.tech::GET", "$")
                     .await
                     .unwrap()
             };

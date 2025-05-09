@@ -1,4 +1,4 @@
-use tucana::shared::{value::Kind, Flow, FlowSetting};
+use tucana::shared::{Flow, FlowSetting, value::Kind};
 
 fn extract_field(settings: &[FlowSetting], def_key: &str, field_name: &str) -> Option<String> {
     settings.iter().find_map(|setting| {
@@ -20,7 +20,7 @@ fn extract_field(settings: &[FlowSetting], def_key: &str, field_name: &str) -> O
 }
 
 /// Every flow identifier needs to start with its
-/// flow_id::project_id::protocol_specific_fields
+/// flow_id::project_id::flow_identifier::protocol_specific_fields
 pub fn get_flow_identifier(flow: &Flow) -> Option<String> {
     match flow.r#type.as_str() {
         "REST" => {
@@ -36,7 +36,7 @@ pub fn get_flow_identifier(flow: &Flow) -> Option<String> {
             };
 
             Some(format!(
-                "{}::{}::{}::{}",
+                "{}::{}::REST::{}::{}",
                 flow.flow_id, flow.project_id, host, method
             ))
         }
@@ -119,7 +119,7 @@ mod test {
         let id = get_flow_identifier(&rest);
 
         assert!(id.is_some());
-        assert_eq!(id.unwrap(), String::from("1::1::abc.code0.tech::GET"))
+        assert_eq!(id.unwrap(), String::from("1::1::REST::abc.code0.tech::GET"))
     }
 
     #[test]
