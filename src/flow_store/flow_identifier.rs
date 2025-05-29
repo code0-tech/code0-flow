@@ -30,7 +30,7 @@ pub fn get_flow_identifier(flow: &Flow) -> Option<String> {
             let (method, host) = match (method, host) {
                 (Some(m), Some(h)) => (m, h),
                 missing => {
-                    eprintln!("missing settings: {:?}", missing);
+                    log::error!("Missing settings: {:?}", missing);
                     return None;
                 }
             };

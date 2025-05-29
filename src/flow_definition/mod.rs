@@ -1,9 +1,9 @@
 use tucana::{
     aquila::{
+        DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
         data_type_service_client::DataTypeServiceClient,
         flow_type_service_client::FlowTypeServiceClient,
         runtime_function_definition_service_client::RuntimeFunctionDefinitionServiceClient,
-        DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
     },
     shared::{DataType, FlowType, RuntimeFunctionDefinition},
 };
@@ -51,14 +51,18 @@ impl FlowUpdateService {
 
     async fn update_data_types(&self) {
         if self.data_types.is_empty() {
+            log::info!("No data types to update");
             return;
         }
 
         log::info!("Updating the current DataTypes!");
         let mut client = match DataTypeServiceClient::connect(self.aquila_url.clone()).await {
-            Ok(client) => client,
+            Ok(client) => {
+                log::info!("Successfully connected to the DataTypeService");
+                client
+            }
             Err(err) => {
-                log::error!("Failed to connect to DataTypeService: {}", err);
+                log::error!("Failed to connect to the DataTypeService: {:?}", err);
                 return;
             }
         };
@@ -75,23 +79,27 @@ impl FlowUpdateService {
                 );
             }
             Err(err) => {
-                log::error!("Failed to update data types: {}", err);
+                log::error!("Failed to update data types: {:?}", err);
             }
         }
     }
 
     async fn update_runtime_definitions(&self) {
         if self.runtime_definitions.is_empty() {
+            log::info!("No runtime definitions to update");
             return;
         }
 
         log::info!("Updating the current RuntimeDefinitions!");
         let mut client =
             match RuntimeFunctionDefinitionServiceClient::connect(self.aquila_url.clone()).await {
-                Ok(client) => client,
+                Ok(client) => {
+                    log::info!("Connected to RuntimeFunctionDefinitionService");
+                    client
+                }
                 Err(err) => {
                     log::error!(
-                        "Failed to connect to RuntimeFunctionDefinitionService: {}",
+                        "Failed to connect to RuntimeFunctionDefinitionService: {:?}",
                         err
                     );
                     return;
@@ -110,21 +118,25 @@ impl FlowUpdateService {
                 );
             }
             Err(err) => {
-                log::error!("Failed to update runtime function definitions: {}", err);
+                log::error!("Failed to update runtime function definitions: {:?}", err);
             }
         }
     }
 
     async fn update_flow_types(&self) {
         if self.flow_types.is_empty() {
+            log::info!("No FlowTypes to update!");
             return;
         }
 
         log::info!("Updating the current FlowTypes!");
         let mut client = match FlowTypeServiceClient::connect(self.aquila_url.clone()).await {
-            Ok(client) => client,
+            Ok(client) => {
+                log::info!("Connected to FlowTypeService!");
+                client
+            }
             Err(err) => {
-                log::error!("Failed to connect to FlowTypeService: {}", err);
+                log::error!("Failed to connect to FlowTypeService: {:?}", err);
                 return;
             }
         };
@@ -141,7 +153,7 @@ impl FlowUpdateService {
                 );
             }
             Err(err) => {
-                log::error!("Failed to update flow types: {}", err);
+                log::error!("Failed to update flow types: {:?}", err);
             }
         }
     }

@@ -2,9 +2,9 @@ use std::{sync::Arc, time::Duration};
 
 use futures_lite::StreamExt;
 use lapin::{
+    Channel,
     options::{BasicConsumeOptions, QueueDeclareOptions},
     types::FieldTable,
-    Channel,
 };
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -44,6 +44,7 @@ pub enum RabbitMqError {
     ConnectionError(String),
     TimeoutError,
     DeserializationError,
+    SerializationError,
 }
 
 impl From<lapin::Error> for RabbitMqError {
@@ -65,6 +66,7 @@ impl std::fmt::Display for RabbitMqError {
             RabbitMqError::ConnectionError(msg) => write!(f, "Connection error: {}", msg),
             RabbitMqError::TimeoutError => write!(f, "Operation timed out"),
             RabbitMqError::DeserializationError => write!(f, "Failed to deserialize message"),
+            RabbitMqError::SerializationError => write!(f, "Failed to serialize message"),
         }
     }
 }
@@ -83,8 +85,10 @@ impl RabbitmqClient {
             )
             .await
         {
-            Ok(_) => (),
-            Err(err) => log::error!("Failed to declare send_queue: {}", err),
+            Ok(_) => {
+                log::info!("Successfully declared send_queue");
+            }
+            Err(err) => log::error!("Failed to declare send_queue: {:?}", err),
         }
 
         match channel
@@ -95,8 +99,10 @@ impl RabbitmqClient {
             )
             .await
         {
-            Ok(_) => (),
-            Err(err) => log::error!("Failed to declare recieve_queue: {}", err),
+            Ok(_) => {
+                log::info!("Successfully declared recieve_queue");
+            }
+            Err(err) => log::error!("Failed to declare recieve_queue: {:?}", err),
         }
 
         RabbitmqClient {
@@ -109,10 +115,10 @@ impl RabbitmqClient {
         &self,
         message_json: String,
         queue_name: &str,
-    ) -> Result<(), lapin::Error> {
+    ) -> Result<(), RabbitMqError> {
         let channel = self.channel.lock().await;
 
-        channel
+        match channel
             .basic_publish(
                 "",         // exchange
                 queue_name, // routing key (queue name)
@@ -120,12 +126,16 @@ impl RabbitmqClient {
                 message_json.as_bytes(),
                 lapin::BasicProperties::default(),
             )
-            .await?;
-
-        Ok(())
+            .await
+        {
+            Err(err) => {
+                log::error!("Failed to publish message: {:?}", err);
+                Err(RabbitMqError::LapinError(err))
+            }
+            Ok(_) => Ok(()),
+        }
     }
 
-    // Receive messages from a queue
     // Receive messages from a queue with no timeout
     pub async fn await_message_no_timeout(
         &self,
@@ -146,8 +156,14 @@ impl RabbitmqClient {
                 .await;
 
             match consumer_res {
-                Ok(consumer) => consumer,
-                Err(err) => panic!("{}", err),
+                Ok(consumer) => {
+                    log::info!("Established queue connection to {}", queue_name);
+                    consumer
+                }
+                Err(err) => {
+                    log::error!("Cannot create consumer for queue {}: {:?}", queue_name, err);
+                    return Err(RabbitMqError::LapinError(err));
+                }
             }
         };
 
@@ -172,17 +188,19 @@ impl RabbitmqClient {
             let message = match serde_json::from_str::<Message>(message_str) {
                 Ok(m) => m,
                 Err(e) => {
-                    log::error!("Failed to parse message: {}", e);
+                    log::error!("Failed to parse message: {:?}", e);
                     return Err(RabbitMqError::DeserializationError);
                 }
             };
 
             if message.message_id == message_id {
                 if ack_on_success {
-                    delivery
+                    if let Err(delivery_error) = delivery
                         .ack(lapin::options::BasicAckOptions::default())
                         .await
-                        .expect("Failed to acknowledge message");
+                    {
+                        log::error!("Failed to acknowledge message: {:?}", delivery_error);
+                    }
                 }
 
                 return Ok(message);
@@ -196,7 +214,7 @@ impl RabbitmqClient {
         &self,
         queue_name: &str,
         handle_message: fn(Message) -> Result<Message, lapin::Error>,
-    ) -> Result<(), lapin::Error> {
+    ) -> Result<(), RabbitMqError> {
         let mut consumer = {
             let channel = self.channel.lock().await;
 
@@ -210,8 +228,14 @@ impl RabbitmqClient {
                 .await;
 
             match consumer_res {
-                Ok(consumer) => consumer,
-                Err(err) => panic!("Cannot consume messages: {}", err),
+                Ok(consumer) => {
+                    log::info!("Established queue connection to {}", queue_name);
+                    consumer
+                }
+                Err(err) => {
+                    log::error!("Cannot create consumer for queue {}: {:?}", queue_name, err);
+                    return Err(RabbitMqError::LapinError(err));
+                }
             }
         };
 
@@ -221,8 +245,8 @@ impl RabbitmqClient {
             let delivery = match delivery {
                 Ok(del) => del,
                 Err(err) => {
-                    log::error!("Error receiving message: {}", err);
-                    return Err(err);
+                    log::error!("Error receiving message: {:?}", err);
+                    return Err(RabbitMqError::LapinError(err));
                 }
             };
 
@@ -233,32 +257,32 @@ impl RabbitmqClient {
                     str
                 }
                 Err(err) => {
-                    log::error!("Error decoding message: {}", err);
-                    return Ok(());
+                    log::error!("Error decoding message: {:?}", err);
+                    return Err(RabbitMqError::DeserializationError);
                 }
             };
             // Parse the message
             let inc_message = match serde_json::from_str::<Message>(message_str) {
                 Ok(mess) => mess,
                 Err(err) => {
-                    log::error!("Error parsing message: {}", err);
-                    return Ok(());
+                    log::error!("Error parsing message: {:?}", err);
+                    return Err(RabbitMqError::DeserializationError);
                 }
             };
 
             let message = match handle_message(inc_message) {
                 Ok(mess) => mess,
                 Err(err) => {
-                    log::error!("Error handling message: {}", err);
-                    return Ok(());
+                    log::error!("Error handling message: {:?}", err);
+                    return Err(RabbitMqError::DeserializationError);
                 }
             };
 
             let message_json = match serde_json::to_string(&message) {
                 Ok(json) => json,
                 Err(err) => {
-                    log::error!("Error serializing message: {}", err);
-                    return Ok(());
+                    log::error!("Error serializing message: {:?}", err);
+                    return Err(RabbitMqError::SerializationError);
                 }
             };
 
@@ -267,10 +291,12 @@ impl RabbitmqClient {
             }
 
             // Acknowledge the message
-            delivery
+            if let Err(delivery_error) = delivery
                 .ack(lapin::options::BasicAckOptions::default())
                 .await
-                .expect("Failed to acknowledge message");
+            {
+                log::error!("Failed to acknowledge message: {:?}", delivery_error);
+            }
         }
 
         Ok(())
