@@ -3,19 +3,22 @@ use lapin::Connection;
 pub async fn build_connection(rabbitmq_url: &str) -> Connection {
     match Connection::connect(rabbitmq_url, lapin::ConnectionProperties::default()).await {
         Ok(env) => env,
-        Err(error) => panic!(
-            "Cannot connect to FlowQueue (RabbitMQ) instance! Reason: {:?}",
-            error
-        ),
+        Err(error) => {
+            log::error!(
+                "Cannot connect to FlowQueue (RabbitMQ) instance! Reason: {:?}",
+                error
+            );
+            panic!("Cannot connect to FlowQueue (RabbitMQ) instance!");
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::flow_queue::connection::build_connection;
+    use testcontainers::GenericImage;
     use testcontainers::core::{IntoContainerPort, WaitFor};
     use testcontainers::runners::AsyncRunner;
-    use testcontainers::GenericImage;
 
     macro_rules! rabbitmq_container_test {
         ($test_name:ident, $consumer:expr) => {

@@ -1,5 +1,5 @@
-use redis::aio::MultiplexedConnection;
 use redis::Client;
+use redis::aio::MultiplexedConnection;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -7,11 +7,17 @@ pub type FlowStore = Arc<Mutex<Box<MultiplexedConnection>>>;
 
 pub fn build_connection(redis_url: String) -> Client {
     match Client::open(redis_url) {
-        Ok(client) => client,
-        Err(con_error) => panic!(
-            "Cannot create Client (Redis) connection! Reason: {}",
-            con_error
-        ),
+        Ok(client) => {
+            log::info!("Successfully created connection to the FlowStore (Redis)");
+            client
+        }
+        Err(con_error) => {
+            log::error!(
+                "Cannot create FlowStoreClient (Redis) connection! Reason: {:?}",
+                con_error
+            );
+            panic!("Failed to create Redis client")
+        }
     }
 }
 
@@ -20,11 +26,17 @@ pub async fn create_flow_store_connection(url: String) -> FlowStore {
         .get_multiplexed_async_connection()
         .await
     {
-        Ok(connection) => connection,
-        Err(error) => panic!(
-            "Cannot create FlowStore (Redis) connection! Reason: {}",
-            error
-        ),
+        Ok(connection) => {
+            log::info!("Successfully created connection to the FlowStore (Redis)");
+            connection
+        }
+        Err(con_error) => {
+            log::error!(
+                "Cannot create FlowStoreClient (Redis) connection! Reason: {:?}",
+                con_error
+            );
+            panic!("Failed to create Redis client")
+        }
     };
 
     Arc::new(Mutex::new(Box::new(client)))
@@ -35,10 +47,10 @@ mod tests {
     use crate::flow_store::connection::create_flow_store_connection;
     use redis::{AsyncCommands, RedisResult};
     use serial_test::serial;
+    use testcontainers::GenericImage;
     use testcontainers::core::IntoContainerPort;
     use testcontainers::core::WaitFor;
     use testcontainers::runners::AsyncRunner;
-    use testcontainers::GenericImage;
 
     macro_rules! redis_container_test {
         ($test_name:ident, $consumer:expr) => {

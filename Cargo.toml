@@ -1,7 +1,7 @@
 [package]
 version = "0.0.0"
 name = "code0-flow"
-edition = "2021"
+edition = "2024"
 description = "Crate for managing the code0-flows inside of the Flow Queue & FlowStore"
 repository = "https://github.com/code0-tech/code0-flow"
 homepage = "https://code0.tech"
