@@ -23,6 +23,8 @@ serde = "1.0.138"
 lapin = "2.5.0"
 futures-lite = "2.6.0"
 tonic = "0.13.0"
+dotenv = "0.15.0"
+
 
 [dev-dependencies]
 testcontainers = "0.24.0"
@@ -36,4 +38,5 @@ default = ["all"]
 flow_queue = []
 flow_store = []
 flow_definition = []
-all = ["flow_queue", "flow_store", "flow_definition"]
+flow_config = []
+all = ["flow_queue", "flow_store", "flow_definition", "flow_config"]
