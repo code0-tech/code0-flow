@@ -12,7 +12,7 @@ tucana = { version = "0.0.28", features = ["aquila"] }
 tokio = "1.43.0"
 async-trait = "0.1.85"
 log = "0.4.24"
-redis = { version = "0.31.0", features = [
+redis = { version = "0.32.0", features = [
     "aio",
     "tokio-comp",
     "async-std-comp",
