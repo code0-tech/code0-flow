@@ -1,9 +1,8 @@
-use tucana::shared::{Flow, FlowSetting, value::Kind};
+use tucana::shared::{FlowSetting, ValidationFlow, value::Kind};
 
 fn extract_field(settings: &[FlowSetting], def_key: &str, field_name: &str) -> Option<String> {
     settings.iter().find_map(|setting| {
-        let def = setting.definition.as_ref()?;
-        if def.key != def_key {
+        if setting.flow_setting_id != def_key {
             return None;
         }
 
@@ -21,7 +20,7 @@ fn extract_field(settings: &[FlowSetting], def_key: &str, field_name: &str) -> O
 
 /// Every flow identifier needs to start with its
 /// flow_id::project_id::flow_identifier::protocol_specific_fields
-pub fn get_flow_identifier(flow: &Flow) -> Option<String> {
+pub fn get_flow_identifier(flow: &ValidationFlow) -> Option<String> {
     match flow.r#type.as_str() {
         "REST" => {
             let method = extract_field(&flow.settings, "HTTP_METHOD", "method");
@@ -48,7 +47,7 @@ pub fn get_flow_identifier(flow: &Flow) -> Option<String> {
 mod test {
     use std::collections::HashMap;
 
-    use tucana::shared::{Flow, FlowSetting, FlowSettingDefinition, Struct};
+    use tucana::shared::{FlowSetting, Struct, ValidationFlow as Flow};
 
     use super::get_flow_identifier;
 
@@ -88,10 +87,8 @@ mod test {
             return_type_identifier: None,
             settings: vec![
                 FlowSetting {
-                    definition: Some(FlowSettingDefinition {
-                        id: String::from("1424525"),
-                        key: String::from("HTTP_HOST"),
-                    }),
+                    database_id: 1424525,
+                    flow_setting_id: String::from("HTTP_HOST"),
                     object: Some(Struct {
                         fields: {
                             let mut map = HashMap::new();
@@ -101,10 +98,8 @@ mod test {
                     }),
                 },
                 FlowSetting {
-                    definition: Some(FlowSettingDefinition {
-                        id: String::from("14245252352"),
-                        key: String::from("HTTP_METHOD"),
-                    }),
+                    database_id: 14245252352,
+                    flow_setting_id: String::from("HTTP_METHOD"),
                     object: Some(Struct {
                         fields: {
                             let mut map = HashMap::new();

@@ -3,7 +3,7 @@ use crate::flow_store::connection::FlowStore;
 use async_trait::async_trait;
 use log::error;
 use redis::{AsyncCommands, JsonAsyncCommands, RedisError, RedisResult};
-use tucana::shared::{Flow, Flows};
+use tucana::shared::{Flows, ValidationFlow};
 
 #[derive(Debug)]
 pub struct FlowStoreError {
@@ -23,7 +23,7 @@ pub enum FlowStoreErrorKind {
 #[async_trait]
 pub trait FlowStoreServiceBase {
     async fn new(redis_client_arc: FlowStore) -> Self;
-    async fn insert_flow(&mut self, flow: Flow) -> Result<i64, FlowStoreError>;
+    async fn insert_flow(&mut self, flow: ValidationFlow) -> Result<i64, FlowStoreError>;
     async fn insert_flows(&mut self, flows: Flows) -> Result<i64, FlowStoreError>;
     async fn delete_flow(&mut self, flow_id: i64) -> Result<i64, RedisError>;
     async fn delete_flows(&mut self, flow_ids: Vec<i64>) -> Result<i64, RedisError>;
@@ -45,7 +45,7 @@ impl FlowStoreServiceBase for FlowStoreService {
     }
 
     /// Insert a list of flows into Redis
-    async fn insert_flow(&mut self, flow: Flow) -> Result<i64, FlowStoreError> {
+    async fn insert_flow(&mut self, flow: ValidationFlow) -> Result<i64, FlowStoreError> {
         let mut connection = self.redis_client_arc.lock().await;
 
         let identifier = match flow_identifier::get_flow_identifier(&flow) {
@@ -175,10 +175,10 @@ impl FlowStoreServiceBase for FlowStoreService {
             .await
         {
             Ok(json_values) => {
-                let mut all_flows: Vec<Flow> = Vec::new();
+                let mut all_flows: Vec<ValidationFlow> = Vec::new();
 
                 for json_str in json_values {
-                    match serde_json::from_str::<Vec<Flow>>(&json_str) {
+                    match serde_json::from_str::<Vec<ValidationFlow>>(&json_str) {
                         Ok(mut flows) => all_flows.append(&mut flows),
                         Err(error) => {
                             return Err(FlowStoreError {
@@ -207,20 +207,19 @@ impl FlowStoreServiceBase for FlowStoreService {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::flow_store::connection::create_flow_store_connection;
     use crate::flow_store::connection::FlowStore;
+    use crate::flow_store::connection::create_flow_store_connection;
     use crate::flow_store::service::FlowStoreService;
     use crate::flow_store::service::FlowStoreServiceBase;
     use redis::{AsyncCommands, JsonAsyncCommands};
     use serial_test::serial;
+    use testcontainers::GenericImage;
     use testcontainers::core::IntoContainerPort;
     use testcontainers::core::WaitFor;
     use testcontainers::runners::AsyncRunner;
-    use testcontainers::GenericImage;
     use tucana::shared::FlowSetting;
-    use tucana::shared::FlowSettingDefinition;
     use tucana::shared::Struct;
-    use tucana::shared::{Flow, Flows};
+    use tucana::shared::{Flows, ValidationFlow};
 
     fn get_string_value(value: &str) -> tucana::shared::Value {
         tucana::shared::Value {
@@ -233,10 +232,8 @@ mod tests {
     fn get_settings() -> Vec<FlowSetting> {
         vec![
             FlowSetting {
-                definition: Some(FlowSettingDefinition {
-                    id: String::from("1424525"),
-                    key: String::from("HTTP_HOST"),
-                }),
+                database_id: 1234567,
+                flow_setting_id: String::from("HTTP_HOST"),
                 object: Some(Struct {
                     fields: {
                         let mut map = HashMap::new();
@@ -246,10 +243,8 @@ mod tests {
                 }),
             },
             FlowSetting {
-                definition: Some(FlowSettingDefinition {
-                    id: String::from("14245252352"),
-                    key: String::from("HTTP_METHOD"),
-                }),
+                database_id: 14245252352,
+                flow_setting_id: String::from("HTTP_METHOD"),
                 object: Some(Struct {
                     fields: {
                         let mut map = HashMap::new();
@@ -304,7 +299,7 @@ mod tests {
     redis_integration_test!(
         insert_one_flow,
         (|connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow = Flow {
+            let flow = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -331,7 +326,8 @@ mod tests {
             println!("{}", redis_result.clone().unwrap());
 
             assert!(redis_result.is_some());
-            let redis_flow: Vec<Flow> = serde_json::from_str(&*redis_result.unwrap()).unwrap();
+            let redis_flow: Vec<ValidationFlow> =
+                serde_json::from_str(&*redis_result.unwrap()).unwrap();
             assert_eq!(redis_flow[0], flow);
         })
     );
@@ -339,7 +335,7 @@ mod tests {
     redis_integration_test!(
         insert_one_flow_fails_no_identifier,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow = Flow {
+            let flow = ValidationFlow {
                 flow_id: 1,
                 r#type: "".to_string(),
                 settings: get_settings(),
@@ -357,7 +353,7 @@ mod tests {
     redis_integration_test!(
         insert_will_overwrite_existing_flow,
         (|connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow = Flow {
+            let flow = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -373,7 +369,7 @@ mod tests {
                 Err(err) => println!("{}", err.reason),
             };
 
-            let flow_overwrite = Flow {
+            let flow_overwrite = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -398,7 +394,7 @@ mod tests {
 
             assert_eq!(redis_result.len(), 1);
             let string: &str = &*redis_result[0];
-            let redis_flow: Vec<Flow> = serde_json::from_str(string).unwrap();
+            let redis_flow: Vec<ValidationFlow> = serde_json::from_str(string).unwrap();
             assert!(redis_flow[0].r#input_type_identifier.is_some());
         })
     );
@@ -406,7 +402,7 @@ mod tests {
     redis_integration_test!(
         insert_many_flows,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow_one = Flow {
+            let flow_one = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -417,7 +413,7 @@ mod tests {
                 starting_node: None,
             };
 
-            let flow_two = Flow {
+            let flow_two = ValidationFlow {
                 flow_id: 2,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -428,7 +424,7 @@ mod tests {
                 starting_node: None,
             };
 
-            let flow_three = Flow {
+            let flow_three = ValidationFlow {
                 flow_id: 3,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -450,7 +446,7 @@ mod tests {
     redis_integration_test!(
         delete_one_existing_flow,
         (|connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow = Flow {
+            let flow = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -490,7 +486,7 @@ mod tests {
     redis_integration_test!(
         delete_many_existing_flows,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow_one = Flow {
+            let flow_one = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -501,7 +497,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_two = Flow {
+            let flow_two = ValidationFlow {
                 flow_id: 2,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -512,7 +508,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_three = Flow {
+            let flow_three = ValidationFlow {
                 flow_id: 3,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -545,7 +541,7 @@ mod tests {
     redis_integration_test!(
         get_existing_flow_ids,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow_one = Flow {
+            let flow_one = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -556,7 +552,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_two = Flow {
+            let flow_two = ValidationFlow {
                 flow_id: 2,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -567,7 +563,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_three = Flow {
+            let flow_three = ValidationFlow {
                 flow_id: 3,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -611,7 +607,7 @@ mod tests {
     redis_integration_test!(
         query_all_flows,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow_one = Flow {
+            let flow_one = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -622,7 +618,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_two = Flow {
+            let flow_two = ValidationFlow {
                 flow_id: 2,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -633,7 +629,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_three = Flow {
+            let flow_three = ValidationFlow {
                 flow_id: 3,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -667,7 +663,7 @@ mod tests {
     redis_integration_test!(
         query_one_existing_flow,
         (|_connection: FlowStore, mut service: FlowStoreService| async move {
-            let flow_one = Flow {
+            let flow_one = ValidationFlow {
                 flow_id: 1,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -678,7 +674,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_two = Flow {
+            let flow_two = ValidationFlow {
                 flow_id: 2,
                 r#type: "REST".to_string(),
                 settings: get_settings(),
@@ -689,7 +685,7 @@ mod tests {
                 project_id: 1,
             };
 
-            let flow_three = Flow {
+            let flow_three = ValidationFlow {
                 flow_id: 3,
                 r#type: "REST".to_string(),
                 settings: get_settings(),

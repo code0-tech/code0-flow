@@ -5,7 +5,7 @@ use tucana::{
         flow_type_service_client::FlowTypeServiceClient,
         runtime_function_definition_service_client::RuntimeFunctionDefinitionServiceClient,
     },
-    shared::{DataType, FlowType, RuntimeFunctionDefinition},
+    shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
 };
 
 pub struct FlowUpdateService {
