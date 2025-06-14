@@ -20,7 +20,7 @@ redis = { version = "0.32.0", features = [
 ] }
 serde_json = "1.0.138"
 serde = "1.0.138"
-lapin = "2.5.0"
+lapin = "3.0.0"
 futures-lite = "2.6.0"
 tonic = "0.13.0"
 dotenv = "0.15.0"
