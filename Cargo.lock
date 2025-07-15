@@ -3084,9 +3084,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tucana"
-version = "0.0.31"
+version = "0.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3338717f8c96cf6b4fb87cc5b41e70f2cd6ab3c1e0148f1bd48ea1a5f5000bf"
+checksum = "8c117a81c52831392910672d37b18b6784167c37e42b055cc5281417dc82002e"
 dependencies = [
  "prost",
  "prost-types",
