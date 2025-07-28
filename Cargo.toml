@@ -27,7 +27,7 @@ dotenv = "0.15.0"
 
 
 [dev-dependencies]
-testcontainers = "0.24.0"
+testcontainers = "0.25.0"
 serial_test = "3.2.0"
 
 [lib]
