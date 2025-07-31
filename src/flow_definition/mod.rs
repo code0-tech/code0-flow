@@ -16,12 +16,39 @@ pub struct FlowUpdateService {
 }
 
 impl FlowUpdateService {
-    pub fn from_url(aquila_url: String) -> Self {
+    /// Create a new FlowUpdateService instance from an Aquila URL and a definition path.
+    ///
+    /// This will read the definition files from the given path and initialize the service with the data types, runtime definitions, and flow types.
+    pub fn from_url(aquila_url: String, definition_path: &str) -> Self {
+        let mut data_types = Vec::new();
+        let mut runtime_definitions = Vec::new();
+        let mut flow_types = Vec::new();
+
+        let definitions = match code0_definition_reader::parser::Parser::from_path(definition_path)
+        {
+            Some(reader) => reader,
+            None => {
+                log::error!("No definition folder found at path: {}", definition_path);
+                return Self {
+                    aquila_url,
+                    data_types,
+                    runtime_definitions,
+                    flow_types,
+                };
+            }
+        };
+
+        for feature in definitions.features {
+            data_types.append(&mut feature.data_types.clone());
+            flow_types.append(&mut feature.flow_types.clone());
+            runtime_definitions.append(&mut feature.runtime_functions.clone());
+        }
+
         Self {
             aquila_url,
-            data_types: Vec::new(),
-            runtime_definitions: Vec::new(),
-            flow_types: Vec::new(),
+            data_types,
+            runtime_definitions,
+            flow_types,
         }
     }
 
