@@ -3,3 +3,6 @@ pub mod flow_definition;
 
 #[cfg(feature = "flow_config")]
 pub mod flow_config;
+
+#[cfg(feature = "flow_health")]
+pub mod flow_health;

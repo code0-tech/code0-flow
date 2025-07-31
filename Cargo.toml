@@ -26,4 +26,5 @@ doctest = true
 default = ["all"]
 flow_definition = []
 flow_config = []
-all = ["flow_definition", "flow_config"]
+flow_health = []
+all = ["flow_definition", "flow_config", "flow_health"]
