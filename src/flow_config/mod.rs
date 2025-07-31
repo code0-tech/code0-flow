@@ -32,11 +32,9 @@ pub fn load_env_file() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serial_test::serial;
     use std::env;
 
     #[test]
-    #[serial]
     fn test_env_with_default_string_exists() {
         let key = "TEST_STRING_VAR";
         let expected = "test_value";
@@ -54,7 +52,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_string_missing() {
         let key = "TEST_MISSING_STRING_VAR";
         unsafe {
@@ -67,7 +64,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_integer_exists() {
         let key = "TEST_INT_VAR";
         let expected = 42;
@@ -84,7 +80,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_integer_missing() {
         let key = "TEST_MISSING_INT_VAR";
         unsafe {
@@ -97,7 +92,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_boolean_exists_true() {
         let key = "TEST_BOOL_TRUE_VAR";
         unsafe {
@@ -113,7 +107,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_boolean_exists_false() {
         let key = "TEST_BOOL_FALSE_VAR";
         unsafe {
@@ -129,7 +122,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_boolean_missing() {
         let key = "TEST_MISSING_BOOL_VAR";
         unsafe {
@@ -142,7 +134,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_boolean_invalid() {
         let key = "TEST_INVALID_BOOL_VAR";
         unsafe {
@@ -158,7 +149,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_u32_exists() {
         let key = "TEST_U32_VAR";
         let expected = 42u32;
@@ -175,7 +165,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_u32_negative_invalid() {
         let key = "TEST_U32_NEGATIVE_VAR";
         unsafe {
@@ -191,7 +180,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_empty_string() {
         let key = "TEST_EMPTY_STRING_VAR";
         unsafe {
@@ -207,7 +195,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_default_whitespace_string() {
         let key = "TEST_WHITESPACE_VAR";
         unsafe {
@@ -223,7 +210,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_environment() {
         let key = "TEST_ENVIRONMENT";
         unsafe {
@@ -239,7 +225,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_env_with_mode() {
         let key = "TEST_MODE";
         unsafe {
