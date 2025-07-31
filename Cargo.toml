@@ -17,6 +17,7 @@ serde = "1.0.138"
 tonic = "0.13.0"
 dotenv = "0.15.0"
 code0-definition-reader = "0.0.8"
+tonic-health = "0.14.0"
 
 [lib]
 doctest = true
