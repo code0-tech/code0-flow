@@ -7,9 +7,9 @@ code0-flow is a Rust library developed by Code0 for managing flows within the Fl
 
 ## Features
 
-- `flow_store` insert, delete & query Flows in the FlowStore
 - `flow_definition` update the Adapter & Runtime definitions
-- `flow_queue` send a Flow into the queue to be executed.
+- `flow_config` base configuration for each service
+- `flow_health` provide health checks including NATS connectivity for readiness probes
 
 ## FlowStore
 
@@ -70,4 +70,21 @@ let update_client = code0_flow::flow_definition::FlowUpdateService::from_url(aqu
 
 // Response --> true if successfull
 update_client.send().await;
+```
+
+## FlowHealth
+
+```rust
+use code0_flow::flow_health::HealthService;
+use tonic_health::pb::health_server::HealthServer;
+
+// Create health service with NATS URL
+let health_service = HealthService::new("nats://localhost:4222".to_string());
+
+// Use with tonic gRPC server
+let health_server = HealthServer::new(health_service);
+
+// The service provides:
+// - "liveness" check: Always returns Serving (application is running)
+// - "readiness" check: Returns Serving only if NATS connection is healthy
 ```
