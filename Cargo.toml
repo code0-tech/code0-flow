@@ -8,16 +8,13 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
-tucana = { version = "0.0.32", features = ["aquila"] }
-tokio = "1.43.0"
+tucana = { version = "0.0.33", features = ["aquila"] }
 async-trait = "0.1.85"
 log = "0.4.24"
-serde_json = "1.0.138"
-serde = "1.0.138"
-tonic = "0.13.0"
+tonic = "0.14.1"
 dotenv = "0.15.0"
-code0-definition-reader = "0.0.8"
-tonic-health = "0.13.1"
+code0-definition-reader = "0.0.9"
+tonic-health = "0.14.1"
 async-nats = "0.42.0"
 futures-core = "0.3.31"
 
