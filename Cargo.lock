@@ -198,9 +198,9 @@ checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
 
 [[package]]
 name = "code0-definition-reader"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bcdd7feee37f0c422c01e2192df7149401ae2ff0d1529a43e1c3d03ac37c779"
+checksum = "ac33bc751c706a7e306931082019aa954c17ae18c31d685fd545bf73716d5c8e"
 dependencies = [
  "serde",
  "serde_json",
