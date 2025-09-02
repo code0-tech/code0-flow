@@ -217,6 +217,7 @@ dependencies = [
  "dotenv",
  "futures-core",
  "log",
+ "regex",
  "serde_json",
  "tonic",
  "tonic-health",
