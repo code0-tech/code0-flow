@@ -8,4 +8,4 @@ pub mod flow_config;
 pub mod flow_health;
 
 #[cfg(feature = "flow_validator")]
-mod flow_validator;
+pub mod flow_validator;
