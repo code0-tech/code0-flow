@@ -24,7 +24,7 @@ impl FlowUpdateService {
         let mut runtime_definitions = Vec::new();
         let mut flow_types = Vec::new();
 
-        let definitions = match code0_definition_reader::parser::Parser::from_path(definition_path)
+        let definitions = match code0_definition_reader::package::Parser::from_path(definition_path)
         {
             Some(reader) => reader,
             None => {
