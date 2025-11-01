@@ -220,7 +220,7 @@ checksum = "e3e3a3aec6ffc35ac360113d8b96206c38961afef56b0c5632cb77cd2f4429b9"
 dependencies = [
  "serde",
  "serde_json",
- "tucana 0.0.39",
+ "tucana",
 ]
 
 [[package]]
@@ -237,7 +237,7 @@ dependencies = [
  "serde_json",
  "tonic",
  "tonic-health",
- "tucana 0.0.36",
+ "tucana",
 ]
 
 [[package]]
@@ -1870,21 +1870,6 @@ checksum = "9fe58ebd5edd976e0fe0f8a14d2a04b7c81ef153ea9a54eebc42e67c2c23b4e5"
 dependencies = [
  "pin-project-lite",
  "tokio",
-]
-
-[[package]]
-name = "tucana"
-version = "0.0.36"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0addd0c58b8b458ba668404246c428d4c71382f5a83d29ac69649f5c575bdfc4"
-dependencies = [
- "prost",
- "prost-types",
- "serde",
- "serde_json",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
 ]
 
 [[package]]
