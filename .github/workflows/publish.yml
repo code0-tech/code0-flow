@@ -17,7 +17,7 @@ jobs:
 
     steps:
       # Set up
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup rust
         run: rustup update --no-self-update stable
       - name: Install protoc
