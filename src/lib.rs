@@ -9,3 +9,6 @@ pub mod flow_health;
 
 #[cfg(feature = "flow_validator")]
 pub mod flow_validator;
+
+#[cfg(feature = "flow_service")]
+pub mod flow_service;
