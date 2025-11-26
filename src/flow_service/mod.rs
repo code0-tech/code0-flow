@@ -1,3 +1,4 @@
+use crate::flow_definition::Reader;
 use tucana::{
     aquila::{
         DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
@@ -7,7 +8,6 @@ use tucana::{
     },
     shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
 };
-use crate::flow_definition::Reader;
 
 pub struct FlowUpdateService {
     aquila_url: String,
@@ -27,8 +27,7 @@ impl FlowUpdateService {
 
         let reader = Reader::configure(definition_path.to_string(), true, vec![], None);
 
-        let features = match reader.read_features()
-        {
+        let features = match reader.read_features() {
             Ok(features) => features,
             Err(error) => {
                 log::error!("Error occurred while reading definitions: {:?}", error);

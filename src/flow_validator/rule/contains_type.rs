@@ -1,8 +1,8 @@
 use super::violation::{DataTypeRuleError, DataTypeRuleViolation, InvalidFormatRuleViolation};
+use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 use tucana::shared::{
     ExecutionDataType, ExecutionDataTypeContainsTypeRuleConfig, Value, value::Kind,
 };
-use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 
 /// # Item of Collection Validation
 ///

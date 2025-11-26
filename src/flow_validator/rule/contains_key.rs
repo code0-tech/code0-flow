@@ -2,12 +2,12 @@ use super::violation::ContainsKeyRuleViolation;
 use super::violation::DataTypeRuleError;
 use super::violation::DataTypeRuleViolation;
 use super::violation::MissingDataTypeRuleDefinition;
+use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 use tucana::shared::ExecutionDataType;
 use tucana::shared::ExecutionDataTypeContainsKeyRuleConfig;
 use tucana::shared::Value;
 use tucana::shared::helper::path::expect_kind;
 use tucana::shared::value::Kind;
-use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 
 /// # Data Type Validation Behavior
 ///

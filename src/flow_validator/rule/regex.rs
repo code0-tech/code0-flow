@@ -1,7 +1,7 @@
-use tucana::shared::{DataTypeRegexRuleConfig, Value, value::Kind};
 use super::violation::{
     DataTypeRuleError, DataTypeRuleViolation, RegexRuleTypeNotAcceptedViolation, RegexRuleViolation,
 };
+use tucana::shared::{DataTypeRegexRuleConfig, Value, value::Kind};
 
 /// # Regex Pattern Validation
 ///
