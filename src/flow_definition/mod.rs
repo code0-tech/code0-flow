@@ -3,17 +3,17 @@ mod feature;
 
 use crate::flow_definition::error::ReaderError;
 use crate::flow_definition::feature::Feature;
-use crate::flow_definition::feature::version::HasVersion;
 use serde::de::DeserializeOwned;
 use std::fs;
 use std::path::Path;
-use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition, Version};
+use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition};
 use walkdir::WalkDir;
+use crate::flow_definition::feature::version::HasVersion;
 
 pub struct Reader {
     should_break: bool,
     accepted_features: Vec<String>,
-    accepted_version: Option<Version>,
+    accepted_version: Option<String>,
     path: String,
 }
 
@@ -22,7 +22,7 @@ impl Reader {
         path: String,
         should_break: bool,
         accepted_features: Vec<String>,
-        accepted_version: Option<Version>,
+        accepted_version: Option<String>,
     ) -> Self {
         Self {
             should_break,
@@ -180,10 +180,6 @@ impl Reader {
 
         let items = raw
             .into_iter()
-            .map(|mut v| {
-                v.normalize_version();
-                v
-            })
             .filter(|v| v.is_accepted(&self.accepted_version))
             .collect();
 
