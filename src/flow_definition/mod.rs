@@ -3,6 +3,7 @@ mod feature;
 
 use crate::flow_definition::error::ReaderError;
 use crate::flow_definition::feature::Feature;
+use crate::flow_definition::feature::version::HasVersion;
 use serde::de::DeserializeOwned;
 use std::fs;
 use std::path::Path;
@@ -43,42 +44,31 @@ impl Reader {
                         .map(|f| f.name.clone())
                         .collect::<Vec<String>>()
                 );
+
                 log::debug!(
                     "Found FlowTypes {:?}",
                     &features
                         .iter()
-                        .map(|f| f
-                            .flow_types
-                            .iter()
-                            .map(|t| t.identifier.clone())
-                            .collect::<Vec<String>>())
-                        .flatten()
+                        .flat_map(|f| f.flow_types.iter().map(|t| t.identifier.clone()))
                         .collect::<Vec<String>>()
                 );
+
                 log::debug!(
                     "Found DataTypes {:?}",
                     &features
                         .iter()
-                        .map(|f| f
-                            .data_types
-                            .iter()
-                            .map(|t| t.identifier.clone())
-                            .collect::<Vec<String>>())
-                        .flatten()
+                        .flat_map(|f| f.data_types.iter().map(|t| t.identifier.clone()))
                         .collect::<Vec<String>>()
                 );
+
                 log::debug!(
                     "Found Functions {:?}",
                     &features
                         .iter()
-                        .map(|f| f
-                            .functions
-                            .iter()
-                            .map(|t| t.runtime_name.clone())
-                            .collect::<Vec<String>>())
-                        .flatten()
+                        .flat_map(|f| f.functions.iter().map(|t| t.runtime_name.clone()))
                         .collect::<Vec<String>>()
                 );
+
                 Ok(features)
             }
             Err(err) => {
@@ -93,16 +83,14 @@ impl Reader {
 
     fn read_feature_content(&self, dir: &Path) -> Result<Vec<Feature>, ReaderError> {
         let mut features: Vec<Feature> = Vec::new();
-        let readdir = match fs::read_dir(dir) {
-            Ok(readdir) => readdir,
-            Err(err) => {
-                log::error!("Failed to read directory {}: {:?}", dir.display(), err);
-                return Err(ReaderError::ReadDirectoryError {
-                    path: dir.to_path_buf(),
-                    error: err,
-                });
+
+        let readdir = fs::read_dir(dir).map_err(|err| {
+            log::error!("Failed to read directory {}: {:?}", dir.display(), err);
+            ReaderError::ReadDirectoryError {
+                path: dir.to_path_buf(),
+                error: err,
             }
-        };
+        })?;
 
         for entry_result in readdir {
             let entry = match entry_result {
@@ -115,137 +103,91 @@ impl Reader {
 
             let path = entry.path();
 
-            if path.is_dir() {
-                let feature_name = path
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string();
+            if !path.is_dir() {
+                continue;
+            }
 
-                if !self.accepted_features.is_empty()
-                    && !self.accepted_features.contains(&feature_name)
-                {
-                    log::info!("Skipping not accepted feature: {}", feature_name);
-                    continue;
-                }
+            let feature_name = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
 
-                let data_types_path = path.join("data_type");
-                let data_types: Vec<DefinitionDataType> =
-                    match self.collect_definitions::<DefinitionDataType>(&data_types_path) {
-                        Ok(types) => types
-                            .into_iter()
-                            .map(|mut f| {
-                                if f.version.is_none() {
-                                    f.version = Some(Version {
-                                        major: 0,
-                                        minor: 0,
-                                        patch: 0,
-                                    });
-                                }
-                                f
-                            })
-                            .filter(|v| {
-                                if self.accepted_version.is_none() {
-                                    return true;
-                                }
+            if !self.accepted_features.is_empty() && !self.accepted_features.contains(&feature_name)
+            {
+                log::info!("Skipping not accepted feature: {}", feature_name);
+                continue;
+            }
 
-                                v.version == self.accepted_version
-                            })
-                            .collect(),
-                        Err(err) => {
-                            if self.should_break {
-                                return Err(ReaderError::ReadFeatureError {
-                                    path: data_types_path.to_string_lossy().to_string(),
-                                    source: Box::new(err),
-                                });
-                            } else {
-                                continue;
-                            }
-                        }
-                    };
+            let data_types = match self
+                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_type")?
+            {
+                Some(v) => v,
+                None => continue,
+            };
 
-                let flow_types_path = path.join("flow_type");
-                let flow_types: Vec<FlowType> =
-                    match self.collect_definitions::<FlowType>(&flow_types_path) {
-                        Ok(types) => types
-                            .into_iter()
-                            .map(|mut f| {
-                                if f.version.is_none() {
-                                    f.version = Some(Version {
-                                        major: 0,
-                                        minor: 0,
-                                        patch: 0,
-                                    });
-                                }
-                                f
-                            })
-                            .filter(|v| {
-                                if self.accepted_version.is_none() {
-                                    return true;
-                                }
-
-                                v.version == self.accepted_version
-                            })
-                            .collect(),
-                        Err(err) => {
-                            if self.should_break {
-                                return Err(ReaderError::ReadFeatureError {
-                                    path: flow_types_path.to_string_lossy().to_string(),
-                                    source: Box::new(err),
-                                });
-                            } else {
-                                continue;
-                            }
-                        }
-                    };
-
-                let functions_path = path.join("runtime_definition");
-                let functions =
-                    match self.collect_definitions::<RuntimeFunctionDefinition>(&functions_path) {
-                        Ok(func) => func
-                            .into_iter()
-                            .map(|mut f| {
-                                if f.version.is_none() {
-                                    f.version = Some(Version {
-                                        major: 0,
-                                        minor: 0,
-                                        patch: 0,
-                                    });
-                                }
-                                f
-                            })
-                            .filter(|v| {
-                                if self.accepted_version.is_none() {
-                                    return true;
-                                }
-
-                                v.version == self.accepted_version
-                            })
-                            .collect(),
-                        Err(err) => {
-                            if self.should_break {
-                                return Err(ReaderError::ReadFeatureError {
-                                    path: functions_path.to_string_lossy().to_string(),
-                                    source: Box::new(err),
-                                });
-                            } else {
-                                continue;
-                            }
-                        }
-                    };
-
-                let feature = Feature {
-                    name: feature_name,
-                    data_types,
-                    flow_types,
-                    functions,
+            let flow_types =
+                match self.load_definitions_for_feature::<FlowType>(&path, "flow_type")? {
+                    Some(v) => v,
+                    None => continue,
                 };
 
-                features.push(feature);
-            }
+            let functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
+                &path,
+                "runtime_definition",
+            )? {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let feature = Feature {
+                name: feature_name,
+                data_types,
+                flow_types,
+                functions,
+            };
+
+            features.push(feature);
         }
 
         Ok(features)
+    }
+
+    fn load_definitions_for_feature<T>(
+        &self,
+        feature_dir: &Path,
+        sub_dir: &str,
+    ) -> Result<Option<Vec<T>>, ReaderError>
+    where
+        T: DeserializeOwned + HasVersion,
+    {
+        let dir = feature_dir.join(sub_dir);
+
+        let raw: Vec<T> = match self.collect_definitions::<T>(&dir) {
+            Ok(v) => v,
+            Err(err) => {
+                if self.should_break {
+                    return Err(ReaderError::ReadFeatureError {
+                        path: dir.to_string_lossy().to_string(),
+                        source: Box::new(err),
+                    });
+                } else {
+                    // Skip this feature if we shouldn't break on error
+                    return Ok(None);
+                }
+            }
+        };
+
+        let items = raw
+            .into_iter()
+            .map(|mut v| {
+                v.normalize_version();
+                v
+            })
+            .filter(|v| v.is_accepted(&self.accepted_version))
+            .collect();
+
+        Ok(Some(items))
     }
 
     fn collect_definitions<T>(&self, dir: &Path) -> Result<Vec<T>, ReaderError>

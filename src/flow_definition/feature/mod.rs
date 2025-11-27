@@ -1,3 +1,5 @@
+pub mod version;
+
 use serde::Deserialize;
 use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition};
 
