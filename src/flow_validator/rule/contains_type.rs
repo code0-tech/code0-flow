@@ -1,8 +1,8 @@
 use super::violation::{DataTypeRuleError, DataTypeRuleViolation, InvalidFormatRuleViolation};
+use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 use tucana::shared::{
     ExecutionDataType, ExecutionDataTypeContainsTypeRuleConfig, Value, value::Kind,
 };
-use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 
 /// # Item of Collection Validation
 ///
@@ -42,7 +42,7 @@ pub fn apply_contains_type(
                 let mut rule_errors: Option<DataTypeRuleError> = None;
 
                 for value in list.values {
-                    match verify_data_type_rules(value, data_type.clone(), &available_data_types) {
+                    match verify_data_type_rules(value, data_type.clone(), available_data_types) {
                         Ok(_) => {}
                         Err(errors) => {
                             rule_errors = Some(errors);

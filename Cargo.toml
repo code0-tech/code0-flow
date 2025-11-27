@@ -8,17 +8,18 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
-tucana = { version = "0.0.39", features = ["aquila"] }
+tucana = { version = "0.0.42", features = ["aquila"] }
 async-trait = "0.1.85"
 log = "0.4.24"
 tonic = "0.14.1"
 dotenv = "0.15.0"
-code0-definition-reader = "0.0.18"
 tonic-health = "0.14.1"
 async-nats = "0.45.0"
 futures-core = "0.3.31"
 regex = "1.11.2"
 serde_json = "1.0.143"
+walkdir = "2.5.0"
+serde = "1.0.228"
 
 [lib]
 doctest = true
@@ -26,7 +27,8 @@ doctest = true
 [features]
 default = ["all"]
 flow_definition = []
+flow_service = ["flow_definition"]
 flow_config = []
 flow_health = []
 flow_validator = []
-all = ["flow_definition", "flow_config", "flow_health", "flow_validator"]
+all = ["flow_definition", "flow_config", "flow_health", "flow_validator", "flow_service"]

@@ -2,12 +2,12 @@ use super::violation::ContainsKeyRuleViolation;
 use super::violation::DataTypeRuleError;
 use super::violation::DataTypeRuleViolation;
 use super::violation::MissingDataTypeRuleDefinition;
+use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 use tucana::shared::ExecutionDataType;
 use tucana::shared::ExecutionDataTypeContainsKeyRuleConfig;
 use tucana::shared::Value;
 use tucana::shared::helper::path::expect_kind;
 use tucana::shared::value::Kind;
-use crate::flow_validator::{get_data_type_by_id, verify_data_type_rules};
 
 /// # Data Type Validation Behavior
 ///
@@ -31,7 +31,7 @@ pub fn apply_contains_key(
     let identifier = rule.data_type_identifier;
 
     if let Some(Kind::StructValue(_)) = &body.kind {
-        let value = match expect_kind(&identifier, &body) {
+        let value = match expect_kind(&identifier, body) {
             Some(value) => Value {
                 kind: Some(value.to_owned()),
             },
@@ -46,7 +46,7 @@ pub fn apply_contains_key(
             }
         };
 
-        let data_type = match get_data_type_by_id(&available_data_types, &identifier) {
+        let data_type = match get_data_type_by_id(available_data_types, &identifier) {
             Some(data_type) => data_type,
             None => {
                 let error = MissingDataTypeRuleDefinition {
@@ -59,14 +59,14 @@ pub fn apply_contains_key(
             }
         };
 
-        return verify_data_type_rules(value, data_type, available_data_types);
+        verify_data_type_rules(value, data_type, available_data_types)
     } else {
-        return Err(DataTypeRuleError {
+        Err(DataTypeRuleError {
             violations: vec![DataTypeRuleViolation::ContainsKey(
                 ContainsKeyRuleViolation {
                     missing_key: identifier,
                 },
             )],
-        });
+        })
     }
 }

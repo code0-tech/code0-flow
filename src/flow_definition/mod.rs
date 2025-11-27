@@ -1,187 +1,237 @@
-use tucana::{
-    aquila::{
-        DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
-        data_type_service_client::DataTypeServiceClient,
-        flow_type_service_client::FlowTypeServiceClient,
-        runtime_function_definition_service_client::RuntimeFunctionDefinitionServiceClient,
-    },
-    shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
-};
+mod error;
+mod feature;
 
-pub struct FlowUpdateService {
-    aquila_url: String,
-    data_types: Vec<DataType>,
-    runtime_definitions: Vec<RuntimeFunctionDefinition>,
-    flow_types: Vec<FlowType>,
+use crate::flow_definition::error::ReaderError;
+use crate::flow_definition::feature::Feature;
+use crate::flow_definition::feature::version::HasVersion;
+use serde::de::DeserializeOwned;
+use std::fs;
+use std::path::Path;
+use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition, Version};
+use walkdir::WalkDir;
+
+pub struct Reader {
+    should_break: bool,
+    accepted_features: Vec<String>,
+    accepted_version: Option<Version>,
+    path: String,
 }
 
-impl FlowUpdateService {
-    /// Create a new FlowUpdateService instance from an Aquila URL and a definition path.
-    ///
-    /// This will read the definition files from the given path and initialize the service with the data types, runtime definitions, and flow types.
-    pub fn from_url(aquila_url: String, definition_path: &str) -> Self {
-        let mut data_types = Vec::new();
-        let mut runtime_definitions = Vec::new();
-        let mut flow_types = Vec::new();
-
-        let definitions = match code0_definition_reader::package::Parser::from_path(definition_path)
-        {
-            Some(reader) => reader,
-            None => {
-                log::error!("No definition folder found at path: {}", definition_path);
-                return Self {
-                    aquila_url,
-                    data_types,
-                    runtime_definitions,
-                    flow_types,
-                };
-            }
-        };
-
-        for feature in definitions.features {
-            data_types.append(&mut feature.data_types.clone());
-            flow_types.append(&mut feature.flow_types.clone());
-            runtime_definitions.append(&mut feature.runtime_functions.clone());
-        }
-
-        Self {
-            aquila_url,
-            data_types,
-            runtime_definitions,
-            flow_types,
-        }
-    }
-
-    pub fn with_flow_types(mut self, flow_types: Vec<FlowType>) -> Self {
-        self.flow_types = flow_types;
-        self
-    }
-
-    pub fn with_data_types(mut self, data_types: Vec<DataType>) -> Self {
-        self.data_types = data_types;
-        self
-    }
-
-    pub fn with_runtime_definitions(
-        mut self,
-        runtime_definitions: Vec<RuntimeFunctionDefinition>,
+impl Reader {
+    pub fn configure(
+        path: String,
+        should_break: bool,
+        accepted_features: Vec<String>,
+        accepted_version: Option<Version>,
     ) -> Self {
-        self.runtime_definitions = runtime_definitions;
-        self
-    }
-
-    pub async fn send(&self) {
-        self.update_data_types().await;
-        self.update_runtime_definitions().await;
-        self.update_flow_types().await;
-    }
-
-    async fn update_data_types(&self) {
-        if self.data_types.is_empty() {
-            log::info!("No data types to update");
-            return;
+        Self {
+            should_break,
+            accepted_features,
+            accepted_version,
+            path,
         }
+    }
 
-        log::info!("Updating the current DataTypes!");
-        let mut client = match DataTypeServiceClient::connect(self.aquila_url.clone()).await {
-            Ok(client) => {
-                log::info!("Successfully connected to the DataTypeService");
-                client
-            }
-            Err(err) => {
-                log::error!("Failed to connect to the DataTypeService: {:?}", err);
-                return;
-            }
-        };
+    pub fn read_features(&self) -> Result<Vec<Feature>, ReaderError> {
+        let definitions = Path::new(&self.path);
 
-        let request = DataTypeUpdateRequest {
-            data_types: self.data_types.clone(),
-        };
-
-        match client.update(request).await {
-            Ok(response) => {
+        match self.read_feature_content(definitions) {
+            Ok(features) => {
                 log::info!(
-                    "Was the update of the DataTypes accepted by Sagittarius? {}",
-                    response.into_inner().success
+                    "Loaded {:?} feature/s",
+                    &features
+                        .iter()
+                        .map(|f| f.name.clone())
+                        .collect::<Vec<String>>()
                 );
+
+                log::debug!(
+                    "Found FlowTypes {:?}",
+                    &features
+                        .iter()
+                        .flat_map(|f| f.flow_types.iter().map(|t| t.identifier.clone()))
+                        .collect::<Vec<String>>()
+                );
+
+                log::debug!(
+                    "Found DataTypes {:?}",
+                    &features
+                        .iter()
+                        .flat_map(|f| f.data_types.iter().map(|t| t.identifier.clone()))
+                        .collect::<Vec<String>>()
+                );
+
+                log::debug!(
+                    "Found Functions {:?}",
+                    &features
+                        .iter()
+                        .flat_map(|f| f.functions.iter().map(|t| t.runtime_name.clone()))
+                        .collect::<Vec<String>>()
+                );
+
+                Ok(features)
             }
             Err(err) => {
-                log::error!("Failed to update data types: {:?}", err);
+                log::error!("Failed to read feature/s from {}, {:?}", &self.path, err);
+                Err(ReaderError::ReadFeatureError {
+                    path: self.path.to_string(),
+                    source: Box::new(err),
+                })
             }
         }
     }
 
-    async fn update_runtime_definitions(&self) {
-        if self.runtime_definitions.is_empty() {
-            log::info!("No runtime definitions to update");
-            return;
-        }
+    fn read_feature_content(&self, dir: &Path) -> Result<Vec<Feature>, ReaderError> {
+        let mut features: Vec<Feature> = Vec::new();
 
-        log::info!("Updating the current RuntimeDefinitions!");
-        let mut client =
-            match RuntimeFunctionDefinitionServiceClient::connect(self.aquila_url.clone()).await {
-                Ok(client) => {
-                    log::info!("Connected to RuntimeFunctionDefinitionService");
-                    client
-                }
+        let readdir = fs::read_dir(dir).map_err(|err| {
+            log::error!("Failed to read directory {}: {:?}", dir.display(), err);
+            ReaderError::ReadDirectoryError {
+                path: dir.to_path_buf(),
+                error: err,
+            }
+        })?;
+
+        for entry_result in readdir {
+            let entry = match entry_result {
+                Ok(entry) => entry,
                 Err(err) => {
-                    log::error!(
-                        "Failed to connect to RuntimeFunctionDefinitionService: {:?}",
-                        err
-                    );
-                    return;
+                    log::error!("Failed to read directory entry: {:?}", err);
+                    return Err(ReaderError::DirectoryEntryError(err));
                 }
             };
 
-        let request = RuntimeFunctionDefinitionUpdateRequest {
-            runtime_functions: self.runtime_definitions.clone(),
-        };
+            let path = entry.path();
 
-        match client.update(request).await {
-            Ok(response) => {
-                log::info!(
-                    "Was the update of the RuntimeFunctionDefinitions accepted by Sagittarius? {}",
-                    response.into_inner().success
-                );
+            if !path.is_dir() {
+                continue;
             }
-            Err(err) => {
-                log::error!("Failed to update runtime function definitions: {:?}", err);
+
+            let feature_name = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+
+            if !self.accepted_features.is_empty() && !self.accepted_features.contains(&feature_name)
+            {
+                log::info!("Skipping not accepted feature: {}", feature_name);
+                continue;
             }
+
+            let data_types = match self
+                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_type")?
+            {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let flow_types =
+                match self.load_definitions_for_feature::<FlowType>(&path, "flow_type")? {
+                    Some(v) => v,
+                    None => continue,
+                };
+
+            let functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
+                &path,
+                "runtime_definition",
+            )? {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let feature = Feature {
+                name: feature_name,
+                data_types,
+                flow_types,
+                functions,
+            };
+
+            features.push(feature);
         }
+
+        Ok(features)
     }
 
-    async fn update_flow_types(&self) {
-        if self.flow_types.is_empty() {
-            log::info!("No FlowTypes to update!");
-            return;
-        }
+    fn load_definitions_for_feature<T>(
+        &self,
+        feature_dir: &Path,
+        sub_dir: &str,
+    ) -> Result<Option<Vec<T>>, ReaderError>
+    where
+        T: DeserializeOwned + HasVersion,
+    {
+        let dir = feature_dir.join(sub_dir);
 
-        log::info!("Updating the current FlowTypes!");
-        let mut client = match FlowTypeServiceClient::connect(self.aquila_url.clone()).await {
-            Ok(client) => {
-                log::info!("Connected to FlowTypeService!");
-                client
-            }
+        let raw: Vec<T> = match self.collect_definitions::<T>(&dir) {
+            Ok(v) => v,
             Err(err) => {
-                log::error!("Failed to connect to FlowTypeService: {:?}", err);
-                return;
+                if self.should_break {
+                    return Err(ReaderError::ReadFeatureError {
+                        path: dir.to_string_lossy().to_string(),
+                        source: Box::new(err),
+                    });
+                } else {
+                    // Skip this feature if we shouldn't break on error
+                    return Ok(None);
+                }
             }
         };
 
-        let request = FlowTypeUpdateRequest {
-            flow_types: self.flow_types.clone(),
-        };
+        let items = raw
+            .into_iter()
+            .map(|mut v| {
+                v.normalize_version();
+                v
+            })
+            .filter(|v| v.is_accepted(&self.accepted_version))
+            .collect();
 
-        match client.update(request).await {
-            Ok(response) => {
-                log::info!(
-                    "Was the update of the FlowTypes accepted by Sagittarius? {}",
-                    response.into_inner().success
-                );
-            }
-            Err(err) => {
-                log::error!("Failed to update flow types: {:?}", err);
+        Ok(Some(items))
+    }
+
+    fn collect_definitions<T>(&self, dir: &Path) -> Result<Vec<T>, ReaderError>
+    where
+        T: DeserializeOwned,
+    {
+        let mut definitions = Vec::new();
+
+        if !dir.exists() {
+            return Ok(definitions);
+        }
+
+        for entry in WalkDir::new(dir).into_iter().filter_map(Result::ok) {
+            let path = entry.path();
+
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "json") {
+                let content = match fs::read_to_string(path) {
+                    Ok(content) => content,
+                    Err(err) => {
+                        log::error!("Failed to read file {}: {}", path.display(), err);
+                        return Err(ReaderError::ReadFileError {
+                            path: path.to_path_buf(),
+                            error: err,
+                        });
+                    }
+                };
+
+                match serde_json::from_str::<T>(&content) {
+                    Ok(def) => definitions.push(def),
+                    Err(e) => {
+                        if self.should_break {
+                            log::error!("Failed to parse JSON in file {}: {:?}", path.display(), e);
+                            return Err(ReaderError::JsonError {
+                                path: path.to_path_buf(),
+                                error: e,
+                            });
+                        } else {
+                            log::warn!("Skipping invalid JSON file {}: {:?}", path.display(), e);
+                        }
+                    }
+                }
             }
         }
+
+        Ok(definitions)
     }
 }
