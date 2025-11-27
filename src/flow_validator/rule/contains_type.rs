@@ -42,7 +42,7 @@ pub fn apply_contains_type(
                 let mut rule_errors: Option<DataTypeRuleError> = None;
 
                 for value in list.values {
-                    match verify_data_type_rules(value, data_type.clone(), &available_data_types) {
+                    match verify_data_type_rules(value, data_type.clone(), available_data_types) {
                         Ok(_) => {}
                         Err(errors) => {
                             rule_errors = Some(errors);

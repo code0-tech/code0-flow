@@ -51,11 +51,11 @@ pub fn apply_regex(rule: DataTypeRegexRuleConfig, body: &Value) -> Result<(), Da
     let regex = regex::Regex::new(rule.pattern.as_str()).unwrap();
 
     if !regex.is_match(&result) {
-        return Err(DataTypeRuleError {
+        Err(DataTypeRuleError {
             violations: vec![DataTypeRuleViolation::Regex(RegexRuleViolation {
                 missing_regex: rule.pattern.clone(),
             })],
-        });
+        })
     } else {
         Ok(())
     }

@@ -71,7 +71,7 @@ fn verify_data_type_rules(
                 }
             }
             Config::ContainsType(config) => {
-                match apply_contains_type(config, &availabe_data_types, &body) {
+                match apply_contains_type(config, availabe_data_types, &body) {
                     Ok(_) => continue,
                     Err(violation) => {
                         violations.extend(violation.violations);
@@ -89,7 +89,7 @@ fn verify_data_type_rules(
                 };
             }
             Config::ContainsKey(config) => {
-                match apply_contains_key(config, &body, &availabe_data_types) {
+                match apply_contains_key(config, &body, availabe_data_types) {
                     Ok(_) => continue,
                     Err(violation) => {
                         violations.extend(violation.violations);

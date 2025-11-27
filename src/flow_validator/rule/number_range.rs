@@ -30,7 +30,7 @@ pub fn apply_number_range(
     };
 
     let result = match kind {
-        Kind::NumberValue(n) => n.clone(),
+        Kind::NumberValue(n) => *n,
         _ => {
             return Err(DataTypeRuleError {
                 violations: vec![DataTypeRuleViolation::RegexTypeNotAccepted(

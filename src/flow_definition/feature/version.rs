@@ -15,7 +15,7 @@ pub trait HasVersion {
     fn is_accepted(&self, filter: &Option<Version>) -> bool {
         filter
             .as_ref()
-            .map_or(true, |v| self.version().as_ref() == Some(v))
+            .is_none_or(|v| self.version().as_ref() == Some(v))
     }
 }
 
