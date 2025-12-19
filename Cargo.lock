@@ -913,9 +913,9 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 
 [[package]]
 name = "pbjson"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "898bac3fa00d0ba57a4e8289837e965baa2dee8c3749f3b11d45a64b4223d9c3"
+checksum = "e8edd1efdd8ab23ba9cb9ace3d9987a72663d5d7c9f74fa00b51d6213645cf6c"
 dependencies = [
  "base64",
  "serde",
@@ -934,15 +934,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "pbjson-types"
-version = "0.8.0"
+name = "pbjson-build"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e748e28374f10a330ee3bb9f29b828c0ac79831a32bab65015ad9b661ead526"
+checksum = "2ed4d5c6ae95e08ac768883c8401cf0e8deb4e6e1d6a4e1fd3d2ec4f0ec63200"
+dependencies = [
+ "heck",
+ "itertools",
+ "prost",
+ "prost-types",
+]
+
+[[package]]
+name = "pbjson-types"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a14e2757d877c0f607a82ce1b8560e224370f159d66c5d52eb55ea187ef0350e"
 dependencies = [
  "bytes",
  "chrono",
  "pbjson",
- "pbjson-build",
+ "pbjson-build 0.9.0",
  "prost",
  "prost-build",
  "serde",
@@ -1873,12 +1885,12 @@ dependencies = [
 
 [[package]]
 name = "tucana"
-version = "0.0.47"
+version = "0.0.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "813a489d90fdd40f8d3e2799af85a71de204edd093a59ef87b6cfd906d9febc4"
+checksum = "58e7638b0a71c5d21fce37e1c1a58994c53c0e7bc3332c322ef4ea5540f0d2c5"
 dependencies = [
  "pbjson",
- "pbjson-build",
+ "pbjson-build 0.8.0",
  "pbjson-types",
  "prost",
  "prost-build",
