@@ -20,6 +20,7 @@ regex = "1.11.2"
 serde_json = "1.0.143"
 walkdir = "2.5.0"
 serde = "1.0.228"
+tokio = "1.49.0"
 
 [lib]
 doctest = true
