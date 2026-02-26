@@ -1487,7 +1487,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1794,9 +1794,9 @@ dependencies = [
 
 [[package]]
 name = "tucana"
-version = "0.0.52"
+version = "0.0.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63e1cec14d8140417b330fffd1fb07f52cbd69063a4bd5688e63511b5bf8c8aa"
+checksum = "31e81f5598a25b6a8f1618fcb25d1a8b2ddbfa38c8a9dcba16a798efe425a36e"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -1917,7 +1917,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
