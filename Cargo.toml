@@ -8,7 +8,7 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
-tucana = { version = "0.0.52", features = ["aquila"] }
+tucana = { version = "0.0.54", features = ["aquila"] }
 async-trait = "0.1.85"
 log = "0.4.24"
 tonic = "0.14.1"
@@ -31,5 +31,4 @@ flow_definition = []
 flow_service = ["flow_definition"]
 flow_config = []
 flow_health = []
-flow_validator = []
-all = ["flow_definition", "flow_config", "flow_health", "flow_validator", "flow_service"]
+all = ["flow_definition", "flow_config", "flow_health", "flow_service"]
