@@ -10,7 +10,7 @@ use tucana::{
     shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
 };
 
-mod retry;
+pub mod retry;
 
 pub struct FlowUpdateService {
     data_types: Vec<DataType>,
