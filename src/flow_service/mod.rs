@@ -5,12 +5,15 @@ use crate::{
 use tonic::{Extensions, Request, transport::Channel};
 use tucana::{
     aquila::{
-        DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
-        data_type_service_client::DataTypeServiceClient,
+        DataTypeUpdateRequest, FlowTypeUpdateRequest, FunctionDefinitionUpdateRequest,
+        RuntimeFunctionDefinitionUpdateRequest, data_type_service_client::DataTypeServiceClient,
         flow_type_service_client::FlowTypeServiceClient,
+        function_definition_service_client::FunctionDefinitionServiceClient,
         runtime_function_definition_service_client::RuntimeFunctionDefinitionServiceClient,
     },
-    shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
+    shared::{
+        DefinitionDataType as DataType, FlowType, FunctionDefinition, RuntimeFunctionDefinition,
+    },
 };
 
 pub mod auth;
@@ -18,7 +21,8 @@ pub mod retry;
 
 pub struct FlowUpdateService {
     data_types: Vec<DataType>,
-    runtime_definitions: Vec<RuntimeFunctionDefinition>,
+    runtime_functions: Vec<RuntimeFunctionDefinition>,
+    functions: Vec<FunctionDefinition>,
     flow_types: Vec<FlowType>,
     channel: Channel,
     aquila_token: String,
@@ -30,7 +34,8 @@ impl FlowUpdateService {
     /// This will read the definition files from the given path and initialize the service with the data types, runtime definitions, and flow types.
     pub async fn from_url(aquila_url: String, definition_path: &str, aquila_token: String) -> Self {
         let mut data_types = Vec::new();
-        let mut runtime_definitions = Vec::new();
+        let mut runtime_functions = Vec::new();
+        let mut functions = Vec::new();
         let mut flow_types = Vec::new();
 
         let reader = Reader::configure(definition_path.to_string(), true, vec![], None);
@@ -46,14 +51,16 @@ impl FlowUpdateService {
         for feature in features {
             data_types.append(&mut feature.data_types.clone());
             flow_types.append(&mut feature.flow_types.clone());
-            runtime_definitions.append(&mut feature.runtime_functions.clone());
+            runtime_functions.append(&mut feature.runtime_functions.clone());
+            functions.append(&mut feature.functions.clone());
         }
 
         let channel = create_channel_with_retry("Aquila", aquila_url).await;
 
         Self {
             data_types,
-            runtime_definitions,
+            runtime_functions,
+            functions,
             flow_types,
             channel,
             aquila_token,
@@ -70,27 +77,33 @@ impl FlowUpdateService {
         self
     }
 
-    pub fn with_runtime_definitions(
+    pub fn with_runtime_functions(
         mut self,
-        runtime_definitions: Vec<RuntimeFunctionDefinition>,
+        runtime_functions: Vec<RuntimeFunctionDefinition>,
     ) -> Self {
-        self.runtime_definitions = runtime_definitions;
+        self.runtime_functions = runtime_functions;
+        self
+    }
+
+    pub fn with_functions(mut self, functions: Vec<FunctionDefinition>) -> Self {
+        self.functions = functions;
         self
     }
 
     pub async fn send(&self) {
         self.update_data_types().await;
-        self.update_runtime_definitions().await;
+        self.update_runtime_functions().await;
+        self.update_functions().await;
         self.update_flow_types().await;
     }
 
     async fn update_data_types(&self) {
         if self.data_types.is_empty() {
-            log::info!("No data types to update");
+            log::info!("No DataTypes present.");
             return;
         }
 
-        log::info!("Updating the current DataTypes!");
+        log::info!("Updating {} DataTypes.", self.data_types.len());
         let mut client = DataTypeServiceClient::new(self.channel.clone());
         let request = Request::from_parts(
             get_authorization_metadata(&self.aquila_token),
@@ -113,19 +126,51 @@ impl FlowUpdateService {
         }
     }
 
-    async fn update_runtime_definitions(&self) {
-        if self.runtime_definitions.is_empty() {
-            log::info!("No runtime definitions to update");
+    async fn update_functions(&self) {
+        if self.functions.is_empty() {
+            log::info!("No FunctionDefinitions present.");
             return;
         }
 
-        log::info!("Updating the current RuntimeDefinitions!");
+        log::info!("Updating {} FunctionDefinitions.", self.functions.len());
+        let mut client = FunctionDefinitionServiceClient::new(self.channel.clone());
+        let request = Request::from_parts(
+            get_authorization_metadata(&self.aquila_token),
+            Extensions::new(),
+            FunctionDefinitionUpdateRequest {
+                functions: self.functions.clone(),
+            },
+        );
+
+        match client.update(request).await {
+            Ok(response) => {
+                log::info!(
+                    "Was the update of the FunctionDefinitions accepted by Sagittarius? {}",
+                    response.into_inner().success
+                );
+            }
+            Err(err) => {
+                log::error!("Failed to update function definitions: {:?}", err);
+            }
+        }
+    }
+
+    async fn update_runtime_functions(&self) {
+        if self.runtime_functions.is_empty() {
+            log::info!("No RuntimeFunctionDefintions present.");
+            return;
+        }
+
+        log::info!(
+            "Updating {} RuntimeFunctionDefinitions.",
+            self.runtime_functions.len()
+        );
         let mut client = RuntimeFunctionDefinitionServiceClient::new(self.channel.clone());
         let request = Request::from_parts(
             get_authorization_metadata(&self.aquila_token),
             Extensions::new(),
             RuntimeFunctionDefinitionUpdateRequest {
-                runtime_functions: self.runtime_definitions.clone(),
+                runtime_functions: self.runtime_functions.clone(),
             },
         );
 
@@ -144,11 +189,11 @@ impl FlowUpdateService {
 
     async fn update_flow_types(&self) {
         if self.flow_types.is_empty() {
-            log::info!("No FlowTypes to update!");
+            log::info!("No FlowTypes present.");
             return;
         }
 
-        log::info!("Updating the current FlowTypes!");
+        log::info!("Updating {} FlowTypes.", self.flow_types.len());
         let mut client = FlowTypeServiceClient::new(self.channel.clone());
         let request = Request::from_parts(
             get_authorization_metadata(&self.aquila_token),
