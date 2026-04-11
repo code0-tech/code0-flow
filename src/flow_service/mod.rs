@@ -1,5 +1,8 @@
-use crate::{flow_definition::Reader, flow_service::retry::create_channel_with_retry};
-use tonic::transport::Channel;
+use crate::{
+    flow_definition::Reader,
+    flow_service::{auth::get_authorization_metadata, retry::create_channel_with_retry},
+};
+use tonic::{Extensions, Request, transport::Channel};
 use tucana::{
     aquila::{
         DataTypeUpdateRequest, FlowTypeUpdateRequest, RuntimeFunctionDefinitionUpdateRequest,
@@ -10,6 +13,7 @@ use tucana::{
     shared::{DefinitionDataType as DataType, FlowType, RuntimeFunctionDefinition},
 };
 
+pub mod auth;
 pub mod retry;
 
 pub struct FlowUpdateService {
@@ -17,13 +21,14 @@ pub struct FlowUpdateService {
     runtime_definitions: Vec<RuntimeFunctionDefinition>,
     flow_types: Vec<FlowType>,
     channel: Channel,
+    aquila_token: String,
 }
 
 impl FlowUpdateService {
     /// Create a new FlowUpdateService instance from an Aquila URL and a definition path.
     ///
     /// This will read the definition files from the given path and initialize the service with the data types, runtime definitions, and flow types.
-    pub async fn from_url(aquila_url: String, definition_path: &str) -> Self {
+    pub async fn from_url(aquila_url: String, definition_path: &str, aquila_token: String) -> Self {
         let mut data_types = Vec::new();
         let mut runtime_definitions = Vec::new();
         let mut flow_types = Vec::new();
@@ -51,6 +56,7 @@ impl FlowUpdateService {
             runtime_definitions,
             flow_types,
             channel,
+            aquila_token,
         }
     }
 
@@ -86,9 +92,13 @@ impl FlowUpdateService {
 
         log::info!("Updating the current DataTypes!");
         let mut client = DataTypeServiceClient::new(self.channel.clone());
-        let request = DataTypeUpdateRequest {
-            data_types: self.data_types.clone(),
-        };
+        let request = Request::from_parts(
+            get_authorization_metadata(&self.aquila_token),
+            Extensions::new(),
+            DataTypeUpdateRequest {
+                data_types: self.data_types.clone(),
+            },
+        );
 
         match client.update(request).await {
             Ok(response) => {
@@ -111,9 +121,13 @@ impl FlowUpdateService {
 
         log::info!("Updating the current RuntimeDefinitions!");
         let mut client = RuntimeFunctionDefinitionServiceClient::new(self.channel.clone());
-        let request = RuntimeFunctionDefinitionUpdateRequest {
-            runtime_functions: self.runtime_definitions.clone(),
-        };
+        let request = Request::from_parts(
+            get_authorization_metadata(&self.aquila_token),
+            Extensions::new(),
+            RuntimeFunctionDefinitionUpdateRequest {
+                runtime_functions: self.runtime_definitions.clone(),
+            },
+        );
 
         match client.update(request).await {
             Ok(response) => {
@@ -136,9 +150,13 @@ impl FlowUpdateService {
 
         log::info!("Updating the current FlowTypes!");
         let mut client = FlowTypeServiceClient::new(self.channel.clone());
-        let request = FlowTypeUpdateRequest {
-            flow_types: self.flow_types.clone(),
-        };
+        let request = Request::from_parts(
+            get_authorization_metadata(&self.aquila_token),
+            Extensions::new(),
+            FlowTypeUpdateRequest {
+                flow_types: self.flow_types.clone(),
+            },
+        );
 
         match client.update(request).await {
             Ok(response) => {
