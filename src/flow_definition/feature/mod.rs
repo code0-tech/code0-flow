@@ -1,12 +1,12 @@
 pub mod version;
 
 use serde::Deserialize;
-use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition};
+use tucana::shared::{DefinitionDataType, FlowType, FunctionDefinition, RuntimeFunctionDefinition};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Feature {
     pub name: String,
     pub data_types: Vec<DefinitionDataType>,
     pub flow_types: Vec<FlowType>,
-    pub functions: Vec<RuntimeFunctionDefinition>,
+    pub runtime_functions: Vec<RuntimeFunctionDefinition>,
 }

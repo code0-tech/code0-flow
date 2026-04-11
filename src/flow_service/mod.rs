@@ -46,7 +46,7 @@ impl FlowUpdateService {
         for feature in features {
             data_types.append(&mut feature.data_types.clone());
             flow_types.append(&mut feature.flow_types.clone());
-            runtime_definitions.append(&mut feature.functions.clone());
+            runtime_definitions.append(&mut feature.runtime_functions.clone());
         }
 
         let channel = create_channel_with_retry("Aquila", aquila_url).await;

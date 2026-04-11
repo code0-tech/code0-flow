@@ -62,10 +62,10 @@ impl Reader {
                 );
 
                 log::debug!(
-                    "Found Functions {:?}",
+                    "Found RuntimeFunctions {:?}",
                     &features
                         .iter()
-                        .flat_map(|f| f.functions.iter().map(|t| t.runtime_name.clone()))
+                        .flat_map(|f| f.runtime_functions.iter().map(|t| t.runtime_name.clone()))
                         .collect::<Vec<String>>()
                 );
 
@@ -132,7 +132,7 @@ impl Reader {
                     None => continue,
                 };
 
-            let functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
+            let runtime_functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
                 &path,
                 "runtime_definition",
             )? {
@@ -144,7 +144,7 @@ impl Reader {
                 name: feature_name,
                 data_types,
                 flow_types,
-                functions,
+                runtime_functions,
             };
 
             features.push(feature);
