@@ -120,14 +120,14 @@ impl Reader {
             }
 
             let data_types = match self
-                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_type")?
+                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_types")?
             {
                 Some(v) => v,
                 None => continue,
             };
 
             let flow_types =
-                match self.load_definitions_for_feature::<FlowType>(&path, "flow_type")? {
+                match self.load_definitions_for_feature::<FlowType>(&path, "flow_types")? {
                     Some(v) => v,
                     None => continue,
                 };
