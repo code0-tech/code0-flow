@@ -3,12 +3,12 @@ mod feature;
 
 use crate::flow_definition::error::ReaderError;
 use crate::flow_definition::feature::Feature;
+use crate::flow_definition::feature::version::HasVersion;
 use serde::de::DeserializeOwned;
 use std::fs;
 use std::path::Path;
-use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition};
+use tucana::shared::{DefinitionDataType, FlowType, FunctionDefinition, RuntimeFunctionDefinition};
 use walkdir::WalkDir;
-use crate::flow_definition::feature::version::HasVersion;
 
 pub struct Reader {
     should_break: bool,
@@ -132,10 +132,18 @@ impl Reader {
                     None => continue,
                 };
 
-            let runtime_functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
-                &path,
-                "runtime_definition",
-            )? {
+            let runtime_functions = match self
+                .load_definitions_for_feature::<RuntimeFunctionDefinition>(
+                    &path,
+                    "runtime_functions",
+                )? {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let functions = match self
+                .load_definitions_for_feature::<FunctionDefinition>(&path, "functions")?
+            {
                 Some(v) => v,
                 None => continue,
             };
@@ -145,6 +153,7 @@ impl Reader {
                 data_types,
                 flow_types,
                 runtime_functions,
+                functions,
             };
 
             features.push(feature);

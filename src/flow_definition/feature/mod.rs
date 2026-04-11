@@ -9,4 +9,5 @@ pub struct Feature {
     pub data_types: Vec<DefinitionDataType>,
     pub flow_types: Vec<FlowType>,
     pub runtime_functions: Vec<RuntimeFunctionDefinition>,
+    pub functions: Vec<FunctionDefinition>,
 }
