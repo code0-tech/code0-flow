@@ -9,7 +9,7 @@ use tonic::metadata::{MetadataMap, MetadataValue};
 /// # Examples
 ///
 /// ```
-/// use aquila_grpc::get_authorization_metadata;
+/// use code0_flow::flow_service::auth::get_authorization_metadata;
 /// let token = String::from("token");
 /// let metadata = get_authorization_metadata(&token);
 /// assert!(metadata.get("authorization").is_some());
