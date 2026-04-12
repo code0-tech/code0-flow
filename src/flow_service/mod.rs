@@ -157,7 +157,7 @@ impl FlowUpdateService {
 
     async fn update_runtime_functions(&self) {
         if self.runtime_functions.is_empty() {
-            log::info!("No RuntimeFunctionDefintions present.");
+            log::info!("No RuntimeFunctionDefinitions present.");
             return;
         }
 
