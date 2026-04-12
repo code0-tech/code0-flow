@@ -31,7 +31,7 @@ pub struct FlowUpdateService {
 impl FlowUpdateService {
     /// Create a new FlowUpdateService instance from an Aquila URL and a definition path.
     ///
-    /// This will read the definition files from the given path and initialize the service with the data types, runtime definitions, and flow types.
+    /// This will read the definition files from the given path and initialize the service with the data types, runtime function definitions, function definitions, and flow types.
     pub async fn from_url(aquila_url: String, definition_path: &str, aquila_token: String) -> Self {
         let mut data_types = Vec::new();
         let mut runtime_functions = Vec::new();
