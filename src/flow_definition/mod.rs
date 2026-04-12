@@ -3,12 +3,12 @@ mod feature;
 
 use crate::flow_definition::error::ReaderError;
 use crate::flow_definition::feature::Feature;
+use crate::flow_definition::feature::version::HasVersion;
 use serde::de::DeserializeOwned;
 use std::fs;
 use std::path::Path;
-use tucana::shared::{DefinitionDataType, FlowType, RuntimeFunctionDefinition};
+use tucana::shared::{DefinitionDataType, FlowType, FunctionDefinition, RuntimeFunctionDefinition};
 use walkdir::WalkDir;
-use crate::flow_definition::feature::version::HasVersion;
 
 pub struct Reader {
     should_break: bool,
@@ -62,10 +62,10 @@ impl Reader {
                 );
 
                 log::debug!(
-                    "Found Functions {:?}",
+                    "Found RuntimeFunctions {:?}",
                     &features
                         .iter()
-                        .flat_map(|f| f.functions.iter().map(|t| t.runtime_name.clone()))
+                        .flat_map(|f| f.runtime_functions.iter().map(|t| t.runtime_name.clone()))
                         .collect::<Vec<String>>()
                 );
 
@@ -120,22 +120,30 @@ impl Reader {
             }
 
             let data_types = match self
-                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_type")?
+                .load_definitions_for_feature::<DefinitionDataType>(&path, "data_types")?
             {
                 Some(v) => v,
                 None => continue,
             };
 
             let flow_types =
-                match self.load_definitions_for_feature::<FlowType>(&path, "flow_type")? {
+                match self.load_definitions_for_feature::<FlowType>(&path, "flow_types")? {
                     Some(v) => v,
                     None => continue,
                 };
 
-            let functions = match self.load_definitions_for_feature::<RuntimeFunctionDefinition>(
-                &path,
-                "runtime_definition",
-            )? {
+            let runtime_functions = match self
+                .load_definitions_for_feature::<RuntimeFunctionDefinition>(
+                    &path,
+                    "runtime_functions",
+                )? {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let functions = match self
+                .load_definitions_for_feature::<FunctionDefinition>(&path, "functions")?
+            {
                 Some(v) => v,
                 None => continue,
             };
@@ -144,6 +152,7 @@ impl Reader {
                 name: feature_name,
                 data_types,
                 flow_types,
+                runtime_functions,
                 functions,
             };
 
