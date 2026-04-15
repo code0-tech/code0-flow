@@ -90,7 +90,11 @@ impl FlowUpdateService {
         self
     }
 
-    pub async fn send(&self) -> bool {
+    pub async fn send(&self) {
+        let _ = self.send_with_status().await;
+    }
+
+    pub async fn send_with_status(&self) -> bool {
         let data_types_success = self.update_data_types().await;
         let runtime_functions_success = self.update_runtime_functions().await;
         let functions_success = self.update_functions().await;
