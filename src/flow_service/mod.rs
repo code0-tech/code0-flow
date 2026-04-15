@@ -95,7 +95,7 @@ impl FlowUpdateService {
         let runtime_functions_success = self.update_runtime_functions().await;
         let functions_success = self.update_functions().await;
         let flow_types_success = self.update_flow_types().await;
-        data_types_success || runtime_functions_success || functions_success || flow_types_success
+        data_types_success && runtime_functions_success && functions_success && flow_types_success
     }
 
     async fn update_data_types(&self) -> bool {
