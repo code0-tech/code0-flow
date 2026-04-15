@@ -91,16 +91,21 @@ impl FlowUpdateService {
     }
 
     pub async fn send(&self) {
-        self.update_data_types().await;
-        self.update_runtime_functions().await;
-        self.update_functions().await;
-        self.update_flow_types().await;
+        let _ = self.send_with_status().await;
     }
 
-    async fn update_data_types(&self) {
+    pub async fn send_with_status(&self) -> bool {
+        let data_types_success = self.update_data_types().await;
+        let runtime_functions_success = self.update_runtime_functions().await;
+        let functions_success = self.update_functions().await;
+        let flow_types_success = self.update_flow_types().await;
+        data_types_success && runtime_functions_success && functions_success && flow_types_success
+    }
+
+    async fn update_data_types(&self) -> bool {
         if self.data_types.is_empty() {
             log::info!("No DataTypes present.");
-            return;
+            return true;
         }
 
         log::info!("Updating {} DataTypes.", self.data_types.len());
@@ -115,21 +120,25 @@ impl FlowUpdateService {
 
         match client.update(request).await {
             Ok(response) => {
+                let res = response.into_inner();
                 log::info!(
                     "Was the update of the DataTypes accepted by Sagittarius? {}",
-                    response.into_inner().success
+                    res.success
                 );
+
+                res.success
             }
             Err(err) => {
                 log::error!("Failed to update data types: {:?}", err);
+                false
             }
         }
     }
 
-    async fn update_functions(&self) {
+    async fn update_functions(&self) -> bool {
         if self.functions.is_empty() {
             log::info!("No FunctionDefinitions present.");
-            return;
+            return true;
         }
 
         log::info!("Updating {} FunctionDefinitions.", self.functions.len());
@@ -144,21 +153,24 @@ impl FlowUpdateService {
 
         match client.update(request).await {
             Ok(response) => {
+                let res = response.into_inner();
                 log::info!(
                     "Was the update of the FunctionDefinitions accepted by Sagittarius? {}",
-                    response.into_inner().success
+                    res.success
                 );
+                res.success
             }
             Err(err) => {
                 log::error!("Failed to update function definitions: {:?}", err);
+                false
             }
         }
     }
 
-    async fn update_runtime_functions(&self) {
+    async fn update_runtime_functions(&self) -> bool {
         if self.runtime_functions.is_empty() {
             log::info!("No RuntimeFunctionDefinitions present.");
-            return;
+            return true;
         }
 
         log::info!(
@@ -176,21 +188,24 @@ impl FlowUpdateService {
 
         match client.update(request).await {
             Ok(response) => {
+                let res = response.into_inner();
                 log::info!(
                     "Was the update of the RuntimeFunctionDefinitions accepted by Sagittarius? {}",
-                    response.into_inner().success
+                    res.success
                 );
+                res.success
             }
             Err(err) => {
                 log::error!("Failed to update runtime function definitions: {:?}", err);
+                false
             }
         }
     }
 
-    async fn update_flow_types(&self) {
+    async fn update_flow_types(&self) -> bool {
         if self.flow_types.is_empty() {
             log::info!("No FlowTypes present.");
-            return;
+            return true;
         }
 
         log::info!("Updating {} FlowTypes.", self.flow_types.len());
@@ -205,13 +220,16 @@ impl FlowUpdateService {
 
         match client.update(request).await {
             Ok(response) => {
+                let res = response.into_inner();
                 log::info!(
                     "Was the update of the FlowTypes accepted by Sagittarius? {}",
-                    response.into_inner().success
+                    res.success
                 );
+                res.success
             }
             Err(err) => {
                 log::error!("Failed to update flow types: {:?}", err);
+                false
             }
         }
     }
