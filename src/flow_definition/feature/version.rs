@@ -4,9 +4,7 @@ pub trait HasVersion {
     fn version(&self) -> &String;
 
     fn is_accepted(&self, filter: &Option<String>) -> bool {
-        filter
-            .as_ref()
-            .is_none_or(|v| self.version() == v)
+        filter.as_ref().is_none_or(|v| self.version() == v)
     }
 }
 
