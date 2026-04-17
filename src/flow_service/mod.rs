@@ -155,15 +155,9 @@ impl FlowUpdateService {
         }
 
         if let Some(source) = &self.definition_source {
-            self.functions = self
-                .functions
-                .clone()
-                .into_iter()
-                .map(|mut x| {
-                    x.definition_source = source.to_string();
-                    x
-                })
-                .collect()
+            for function in self.functions.iter_mut() {
+                function.definition_source = source.to_string();
+            }
         };
 
         log::info!("Updating {} FunctionDefinitions.", self.functions.len());
