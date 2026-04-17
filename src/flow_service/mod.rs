@@ -26,6 +26,7 @@ pub struct FlowUpdateService {
     flow_types: Vec<FlowType>,
     channel: Channel,
     aquila_token: String,
+    definition_source: Option<String>,
 }
 
 impl FlowUpdateService {
@@ -64,7 +65,13 @@ impl FlowUpdateService {
             flow_types,
             channel,
             aquila_token,
+            definition_source: None,
         }
+    }
+
+    pub fn with_definiton_source(mut self, source: String) -> Self {
+        self.definition_source = Some(source);
+        self
     }
 
     pub fn with_flow_types(mut self, flow_types: Vec<FlowType>) -> Self {
@@ -90,11 +97,11 @@ impl FlowUpdateService {
         self
     }
 
-    pub async fn send(&self) {
+    pub async fn send(&mut self) {
         let _ = self.send_with_status().await;
     }
 
-    pub async fn send_with_status(&self) -> bool {
+    pub async fn send_with_status(&mut self) -> bool {
         let data_types_success = self.update_data_types().await;
         let runtime_functions_success = self.update_runtime_functions().await;
         let functions_success = self.update_functions().await;
@@ -102,11 +109,23 @@ impl FlowUpdateService {
         data_types_success && runtime_functions_success && functions_success && flow_types_success
     }
 
-    async fn update_data_types(&self) -> bool {
+    async fn update_data_types(&mut self) -> bool {
         if self.data_types.is_empty() {
             log::info!("No DataTypes present.");
             return true;
         }
+
+        if let Some(source) = &self.definition_source {
+            self.data_types = self
+                .data_types
+                .clone()
+                .into_iter()
+                .map(|mut x| {
+                    x.definition_source = source.to_string();
+                    x
+                })
+                .collect()
+        };
 
         log::info!("Updating {} DataTypes.", self.data_types.len());
         let mut client = DataTypeServiceClient::new(self.channel.clone());
@@ -135,11 +154,23 @@ impl FlowUpdateService {
         }
     }
 
-    async fn update_functions(&self) -> bool {
+    async fn update_functions(&mut self) -> bool {
         if self.functions.is_empty() {
             log::info!("No FunctionDefinitions present.");
             return true;
         }
+
+        if let Some(source) = &self.definition_source {
+            self.functions = self
+                .functions
+                .clone()
+                .into_iter()
+                .map(|mut x| {
+                    x.definition_source = source.to_string();
+                    x
+                })
+                .collect()
+        };
 
         log::info!("Updating {} FunctionDefinitions.", self.functions.len());
         let mut client = FunctionDefinitionServiceClient::new(self.channel.clone());
@@ -167,11 +198,23 @@ impl FlowUpdateService {
         }
     }
 
-    async fn update_runtime_functions(&self) -> bool {
+    async fn update_runtime_functions(&mut self) -> bool {
         if self.runtime_functions.is_empty() {
             log::info!("No RuntimeFunctionDefinitions present.");
             return true;
         }
+
+        if let Some(source) = &self.definition_source {
+            self.runtime_functions = self
+                .runtime_functions
+                .clone()
+                .into_iter()
+                .map(|mut x| {
+                    x.definition_source = source.to_string();
+                    x
+                })
+                .collect()
+        };
 
         log::info!(
             "Updating {} RuntimeFunctionDefinitions.",
@@ -202,11 +245,21 @@ impl FlowUpdateService {
         }
     }
 
-    async fn update_flow_types(&self) -> bool {
+    async fn update_flow_types(&mut self) -> bool {
         if self.flow_types.is_empty() {
             log::info!("No FlowTypes present.");
             return true;
         }
+
+        self.flow_types = self
+            .flow_types
+            .clone()
+            .into_iter()
+            .map(|mut x| {
+                x.definition_source = self.definition_source.clone();
+                x
+            })
+            .collect();
 
         log::info!("Updating {} FlowTypes.", self.flow_types.len());
         let mut client = FlowTypeServiceClient::new(self.channel.clone());
