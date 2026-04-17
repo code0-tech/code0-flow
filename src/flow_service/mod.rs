@@ -245,9 +245,10 @@ impl FlowUpdateService {
             return true;
         }
 
-        let definition_source = self.definition_source.clone();
-        for flow_type in self.flow_types.iter_mut() {
-            flow_type.definition_source = definition_source.clone();
+        if let Some(source) = &self.definition_source {
+            for flow_type in self.flow_types.iter_mut() {
+                flow_type.definition_source = Some(source.to_string());
+            }
         }
 
         log::info!("Updating {} FlowTypes.", self.flow_types.len());
