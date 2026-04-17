@@ -119,7 +119,7 @@ impl FlowUpdateService {
             for data_type in self.data_types.iter_mut() {
                 data_type.definition_source = source.to_string();
             }
-        };
+        }
 
         log::info!("Updating {} DataTypes.", self.data_types.len());
         let mut client = DataTypeServiceClient::new(self.channel.clone());
