@@ -116,15 +116,9 @@ impl FlowUpdateService {
         }
 
         if let Some(source) = &self.definition_source {
-            self.data_types = self
-                .data_types
-                .clone()
-                .into_iter()
-                .map(|mut x| {
-                    x.definition_source = source.to_string();
-                    x
-                })
-                .collect()
+            for data_type in self.data_types.iter_mut() {
+                data_type.definition_source = source.to_string();
+            }
         };
 
         log::info!("Updating {} DataTypes.", self.data_types.len());
