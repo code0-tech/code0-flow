@@ -198,17 +198,10 @@ impl FlowUpdateService {
             return true;
         }
 
-        if let Some(source) = &self.definition_source {
-            self.runtime_functions = self
-                .runtime_functions
-                .clone()
-                .into_iter()
-                .map(|mut x| {
-                    x.definition_source = source.to_string();
-                    x
-                })
-                .collect()
-        };
+        let definition_source = self.definition_source.clone();
+        for runtime_function in self.runtime_functions.iter_mut() {
+            runtime_function.definition_source = definition_source.clone();
+        }
 
         log::info!(
             "Updating {} RuntimeFunctionDefinitions.",
