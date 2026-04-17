@@ -245,15 +245,10 @@ impl FlowUpdateService {
             return true;
         }
 
-        self.flow_types = self
-            .flow_types
-            .clone()
-            .into_iter()
-            .map(|mut x| {
-                x.definition_source = self.definition_source.clone();
-                x
-            })
-            .collect();
+        let definition_source = self.definition_source.clone();
+        for flow_type in self.flow_types.iter_mut() {
+            flow_type.definition_source = definition_source.clone();
+        }
 
         log::info!("Updating {} FlowTypes.", self.flow_types.len());
         let mut client = FlowTypeServiceClient::new(self.channel.clone());
