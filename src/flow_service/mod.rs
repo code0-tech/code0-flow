@@ -69,7 +69,7 @@ impl FlowUpdateService {
         }
     }
 
-    pub fn with_definiton_source(mut self, source: String) -> Self {
+    pub fn with_definition_source(mut self, source: String) -> Self {
         self.definition_source = Some(source);
         self
     }
