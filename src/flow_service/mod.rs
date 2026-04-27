@@ -21,7 +21,8 @@ pub struct FlowUpdateService {
 impl FlowUpdateService {
     /// Create a new FlowUpdateService instance from an Aquila URL and a definition path.
     ///
-    /// This will read the definition files from the given path and initialize the service with the data types, runtime function definitions, function definitions, and flow types.
+    /// This reads the definition files from the given path as modules and initializes the
+    /// service with those module definitions.
     pub async fn from_url(aquila_url: String, definition_path: &str, aquila_token: String) -> Self {
         let reader = Reader::configure(definition_path.to_string(), true, vec![], None);
         let modules = match reader.read_modules() {
