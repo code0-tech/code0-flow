@@ -362,7 +362,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1180,7 +1180,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1773,9 +1773,9 @@ dependencies = [
 
 [[package]]
 name = "tucana"
-version = "0.0.68"
+version = "0.0.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abae78f798d1203bbcce361ba4cb4c500f8fe64e56d16ba3a5a0854e285377eb"
+checksum = "1ececdc8eeccd39a9ba82a4ee78e9663d9871a9ca9da65013477536360322392"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -1896,7 +1896,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
