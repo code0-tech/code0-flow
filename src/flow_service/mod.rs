@@ -58,7 +58,7 @@ impl FlowUpdateService {
 
     async fn update(&mut self) -> bool {
         if self.modules.is_empty() {
-            log::info!("No Modules are present, aboarting update.");
+            log::info!("No Modules are present, aborting update.");
             return true;
         }
 
