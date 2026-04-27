@@ -279,7 +279,7 @@ fn load_json_dir<T: DeserializeOwned>(
                     .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
         })
     {
-        match read_json_file::<T>(&file.as_path()) {
+        match read_json_file::<T>(file.as_path()) {
             Ok(item) => items.push(item),
             Err(err) if should_break => return Err(err),
             Err(err) => log::warn!("Skipping invalid definition {}: {:?}", file.display(), err),
