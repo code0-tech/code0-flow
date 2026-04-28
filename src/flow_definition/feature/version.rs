@@ -1,4 +1,6 @@
-use tucana::shared::{DefinitionDataType, FlowType, FunctionDefinition, RuntimeFunctionDefinition};
+use tucana::shared::{
+    DefinitionDataType, FlowType, FunctionDefinition, RuntimeFlowType, RuntimeFunctionDefinition,
+};
 
 pub trait HasVersion {
     fn version(&self) -> &String;
@@ -25,6 +27,13 @@ impl HasVersion for FunctionDefinition {
         &self.version
     }
 }
+
+impl HasVersion for RuntimeFlowType {
+    fn version(&self) -> &String {
+        &self.version
+    }
+}
+
 impl HasVersion for RuntimeFunctionDefinition {
     fn version(&self) -> &String {
         &self.version
