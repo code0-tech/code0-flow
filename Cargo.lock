@@ -1852,9 +1852,9 @@ dependencies = [
 
 [[package]]
 name = "tucana"
-version = "0.0.70"
+version = "0.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ececdc8eeccd39a9ba82a4ee78e9663d9871a9ca9da65013477536360322392"
+checksum = "bc5513f2fc08c899ee75f2f4717a7c4af53269a80e76b2f1a331b3455544b1ef"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -2033,7 +2033,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

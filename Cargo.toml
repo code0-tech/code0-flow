@@ -8,7 +8,7 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
-tucana = { version = "0.0.70", features = ["aquila"] }
+tucana = { version = "0.0.72", features = ["aquila"] }
 async-trait = "0.1.85"
 log = "0.4.24"
 tonic = "0.14.1"
