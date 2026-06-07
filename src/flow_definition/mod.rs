@@ -65,6 +65,7 @@ impl LoadedModule {
             runtime_function_definitions: self.runtime_functions,
             definition_data_types: self.data_types,
             configurations: self.configurations,
+            definitions: Vec::new(),
         }
     }
 }
