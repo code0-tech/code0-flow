@@ -2,6 +2,7 @@ use crate::{
     flow_definition::Reader,
     flow_service::{auth::get_authorization_metadata, retry::create_channel_with_retry},
 };
+use tokio::time::Duration;
 use tonic::{Extensions, Request, transport::Channel};
 use tucana::{
     aquila::{ModuleUpdateRequest, module_service_client::ModuleServiceClient},
@@ -28,7 +29,13 @@ impl FlowUpdateService {
     ///
     /// This reads the definition files from the given path as modules and initializes the
     /// service with those module definitions.
-    pub async fn from_url(aquila_url: String, definition_path: &str, aquila_token: String) -> Self {
+    pub async fn from_url(
+        aquila_url: String,
+        definition_path: &str,
+        aquila_token: String,
+        connect_timeout: Duration,
+        request_timeout: Duration,
+    ) -> Self {
         let reader = Reader::configure(definition_path.to_string(), true, vec![], None);
         let modules = match reader.read_modules() {
             Ok(modules) => modules,
@@ -38,7 +45,8 @@ impl FlowUpdateService {
             }
         };
 
-        let channel = create_channel_with_retry("Aquila", aquila_url).await;
+        let channel =
+            create_channel_with_retry("Aquila", aquila_url, connect_timeout, request_timeout).await;
 
         Self {
             modules,

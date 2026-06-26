@@ -5,7 +5,12 @@ const MAX_BACKOFF: u64 = 2000 * 60;
 const MAX_RETRIES: i8 = 10;
 
 // Will create a channel and retry if its not possible
-pub async fn create_channel_with_retry(channel_name: &str, url: String) -> Channel {
+pub async fn create_channel_with_retry(
+    channel_name: &str,
+    url: String,
+    connect_timeout: Duration,
+    request_timeout: Duration,
+) -> Channel {
     let mut backoff = 100;
     let mut retries = 0;
 
@@ -13,8 +18,7 @@ pub async fn create_channel_with_retry(channel_name: &str, url: String) -> Chann
         let channel = match Endpoint::from_shared(url.clone()) {
             Ok(c) => {
                 log::debug!("Creating a new endpoint for the: {} Service", channel_name);
-                c.connect_timeout(Duration::from_secs(2))
-                    .timeout(Duration::from_secs(10))
+                c.connect_timeout(connect_timeout).timeout(request_timeout)
             }
             Err(err) => {
                 panic!(
