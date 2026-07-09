@@ -7,11 +7,11 @@ pub fn env_with_default<T: FromStr + Debug>(key: &str, default: T) -> T {
     match std::env::var(key) {
         Ok(string) => match T::from_str(&string) {
             Ok(value) => {
-                log::info!("Found env: {} with value: {:?}", key, &value);
+                log::info!("Found env: {} with value: {:?}", key, value);
                 value
             }
             Err(_) => {
-                log::warn!("Failed to parse env: {} with value: {:?}", key, &string);
+                log::warn!("Failed to parse env: {} with value: {:?}", key, string);
                 default
             }
         },
