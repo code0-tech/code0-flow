@@ -36,9 +36,6 @@ jobs:
           sudo apt-get install -y protobuf-compiler
           protoc --version
 
-      - name: Set version
-        run: sed -i "s/version = \"0.0.0\"/version = \"${{ github.ref_name }}\"/" Cargo.toml
-
       - name: Check formatting
         run: cargo fmt --all -- --check
 
@@ -50,6 +47,9 @@ jobs:
 
       - name: Run tests
         run: cargo test --locked --features all
+
+      - name: Set version
+        run: sed -i "s/version = \"0.0.0\"/version = \"${{ github.ref_name }}\"/" Cargo.toml
 
       - name: Cargo Login
         run: cargo login ${{secrets.CARGO_REGISTRY_TOKEN}}
