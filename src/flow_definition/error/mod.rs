@@ -2,6 +2,7 @@ use std::io;
 use std::path::PathBuf;
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum ReaderError {
     JsonError {
         path: PathBuf,

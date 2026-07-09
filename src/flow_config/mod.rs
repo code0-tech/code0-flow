@@ -99,7 +99,7 @@ mod tests {
         }
 
         let result = env_with_default(key, false);
-        assert_eq!(result, true);
+        assert!(result);
 
         unsafe {
             env::remove_var(key);
@@ -114,7 +114,7 @@ mod tests {
         }
 
         let result = env_with_default(key, true);
-        assert_eq!(result, false);
+        assert!(!result);
 
         unsafe {
             env::remove_var(key);
@@ -141,7 +141,7 @@ mod tests {
         }
 
         let result = env_with_default(key, false);
-        assert_eq!(result, false);
+        assert!(!result);
 
         unsafe {
             env::remove_var(key);
