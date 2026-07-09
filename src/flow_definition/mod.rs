@@ -10,7 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tucana::shared::{
     DefinitionDataType, FlowType, FunctionDefinition, Module, ModuleConfigurationDefinition,
-    RuntimeFlowType, RuntimeFunctionDefinition, Translation,
+    ModuleDefinition, RuntimeFlowType, RuntimeFunctionDefinition, Translation,
 };
 use walkdir::WalkDir;
 
@@ -43,6 +43,7 @@ struct LoadedModule {
     functions: Vec<FunctionDefinition>,
     runtime_functions: Vec<RuntimeFunctionDefinition>,
     configurations: Vec<ModuleConfigurationDefinition>,
+    definitions: Vec<ModuleDefinition>,
 }
 
 impl LoadedModule {
@@ -65,7 +66,7 @@ impl LoadedModule {
             runtime_function_definitions: self.runtime_functions,
             definition_data_types: self.data_types,
             configurations: self.configurations,
-            definitions: Vec::new(),
+            definitions: self.definitions,
         }
     }
 }
@@ -209,6 +210,11 @@ impl Reader {
                             )?,
                         );
                     }
+                    "definition" | "definitions" | "module_definition" | "module_definitions" => {
+                        module
+                            .definitions
+                            .extend(load_json_dir::<ModuleDefinition>(&path, self.should_break)?);
+                    }
                     _ => {}
                 }
             }
@@ -335,6 +341,10 @@ fn is_definition_dir(name: &str) -> bool {
             | "functions"
             | "configuration"
             | "configurations"
+            | "definition"
+            | "definitions"
+            | "module_definition"
+            | "module_definitions"
     )
 }
 
@@ -353,5 +363,242 @@ fn module_name_from_paths(root: &Path, module_path: &Path) -> String {
             .to_string()
     } else {
         relative.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tucana::shared::module_definition;
+
+    static TEST_DIRECTORY_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+    struct TestDefinitions {
+        root: PathBuf,
+    }
+
+    impl TestDefinitions {
+        fn new(name: &str) -> Self {
+            let id = TEST_DIRECTORY_COUNTER.fetch_add(1, Ordering::Relaxed);
+            let root =
+                std::env::temp_dir().join(format!("code0-flow-{name}-{}-{id}", std::process::id()));
+
+            if root.exists() {
+                fs::remove_dir_all(&root).expect("clean stale test definitions");
+            }
+
+            Self { root }
+        }
+
+        fn write(&self, path: &str, content: &str) {
+            let path = self.root.join(path);
+            fs::create_dir_all(path.parent().expect("test definition parent"))
+                .expect("create test definition directory");
+            fs::write(path, content).expect("write test definition");
+        }
+
+        fn path(&self) -> String {
+            self.root.to_string_lossy().to_string()
+        }
+    }
+
+    impl Drop for TestDefinitions {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.root);
+        }
+    }
+
+    fn definitions_fixture() -> TestDefinitions {
+        let definitions = TestDefinitions::new("definitions-fixture");
+        definitions.write(
+            "taurus/boolean/module.json",
+            r#"{
+                "identifier": "taurus.boolean",
+                "name": [{"code": "en-US", "content": "Boolean"}],
+                "description": [{"code": "en-US", "content": "Boolean feature"}],
+                "documentation": "Boolean docs",
+                "author": "Code0",
+                "icon": "tabler:toggle-left",
+                "version": "1.0.0"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/data_types/boolean.proto.json",
+            r#"{
+                "identifier": "BOOLEAN",
+                "name": [{"code": "en-US", "content": "Boolean"}],
+                "displayMessage": [{"code": "en-US", "content": "Boolean"}],
+                "alias": [{"code": "en-US", "content": "bool"}],
+                "rules": [],
+                "type": "boolean",
+                "version": "1.0.0"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/flow_types/boolean-flow.proto.json",
+            r#"{
+                "identifier": "BOOLEAN_FLOW",
+                "runtimeIdentifier": "BOOLEAN_FLOW",
+                "settings": [],
+                "editable": true,
+                "name": [{"code": "en-US", "content": "Boolean Flow"}],
+                "description": [],
+                "documentation": [],
+                "displayMessage": [],
+                "alias": [],
+                "version": "1.0.0",
+                "displayIcon": "tabler:toggle-left",
+                "linkedDataTypeIdentifiers": ["BOOLEAN"],
+                "signature": "(): void"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/functions/std_boolean_negate.proto.json",
+            r#"{
+                "runtimeName": "std::boolean::negate",
+                "runtimeDefinitionName": "std::boolean::negate",
+                "parameterDefinitions": [],
+                "signature": "(): BOOLEAN",
+                "throwsError": false,
+                "name": [{"code": "en-US", "content": "Negate Boolean"}],
+                "description": [],
+                "documentation": [],
+                "deprecationMessage": [],
+                "displayMessage": [],
+                "alias": [],
+                "linkedDataTypeIdentifiers": ["BOOLEAN"],
+                "version": "1.0.0",
+                "displayIcon": "tabler:toggle-left"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/runtime_functions/std_boolean_negate.proto.json",
+            r#"{
+                "runtimeName": "std::boolean::negate",
+                "runtimeParameterDefinitions": [],
+                "signature": "(): BOOLEAN",
+                "throwsError": false,
+                "name": [{"code": "en-US", "content": "Negate Boolean"}],
+                "description": [],
+                "documentation": [],
+                "deprecationMessage": [],
+                "displayMessage": [],
+                "alias": [],
+                "linkedDataTypeIdentifiers": ["BOOLEAN"],
+                "version": "1.0.0",
+                "displayIcon": "tabler:toggle-left"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/runtime_flow_types/boolean-flow.proto.json",
+            r#"{
+                "identifier": "BOOLEAN_FLOW",
+                "runtimeSettings": [],
+                "editable": true,
+                "name": [{"code": "en-US", "content": "Boolean Flow"}],
+                "description": [],
+                "documentation": [],
+                "displayMessage": [],
+                "alias": [],
+                "version": "1.0.0",
+                "displayIcon": "tabler:toggle-left",
+                "linkedDataTypeIdentifiers": ["BOOLEAN"],
+                "signature": "(): void"
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/configurations/endpoint.proto.json",
+            r#"{
+                "identifier": "endpoint",
+                "name": [{"code": "en-US", "content": "Endpoint"}],
+                "description": [],
+                "type": "TEXT",
+                "linkedDataTypeIdentifiers": []
+            }"#,
+        );
+        definitions.write(
+            "taurus/boolean/definitions/endpoint.proto.json",
+            r#"{
+                "flowTypeIdentifier": ["BOOLEAN_FLOW"],
+                "endpoint": {
+                    "host": "localhost",
+                    "port": "8080",
+                    "endpoint": "/boolean"
+                }
+            }"#,
+        );
+
+        definitions
+    }
+
+    #[test]
+    fn read_features_registers_definition_features() {
+        let definitions = definitions_fixture();
+        let reader = Reader::configure(definitions.path(), true, vec![], None);
+
+        let features = reader.read_features().expect("read features");
+
+        assert_eq!(features.len(), 1);
+        let feature = &features[0];
+        assert_eq!(feature.name, "taurus/boolean");
+        assert_eq!(feature.data_types[0].identifier, "BOOLEAN");
+        assert_eq!(feature.flow_types[0].identifier, "BOOLEAN_FLOW");
+        assert_eq!(feature.functions[0].runtime_name, "std::boolean::negate");
+        assert_eq!(
+            feature.runtime_functions[0].runtime_name,
+            "std::boolean::negate"
+        );
+    }
+
+    #[test]
+    fn read_modules_registers_full_definition_payload() {
+        let definitions = definitions_fixture();
+        let reader = Reader::configure(definitions.path(), true, vec![], None);
+
+        let modules = reader.read_modules().expect("read modules");
+
+        assert_eq!(modules.len(), 1);
+        let module = &modules[0];
+        assert_eq!(module.identifier, "taurus.boolean");
+        assert_eq!(module.definition_data_types.len(), 1);
+        assert_eq!(module.flow_types.len(), 1);
+        assert_eq!(module.runtime_flow_types.len(), 1);
+        assert_eq!(module.function_definitions.len(), 1);
+        assert_eq!(module.runtime_function_definitions.len(), 1);
+        assert_eq!(module.configurations.len(), 1);
+        assert_eq!(module.definitions.len(), 1);
+        assert_eq!(
+            module.definitions[0].flow_type_identifier,
+            vec!["BOOLEAN_FLOW".to_string()]
+        );
+
+        match module.definitions[0].value.as_ref() {
+            Some(module_definition::Value::Endpoint(endpoint)) => {
+                assert_eq!(endpoint.host, "localhost");
+                assert_eq!(endpoint.port, 8080);
+                assert_eq!(endpoint.endpoint, "/boolean");
+            }
+            value => panic!("expected endpoint module definition, got {value:?}"),
+        }
+    }
+
+    #[test]
+    fn read_features_filters_definitions_by_version() {
+        let definitions = definitions_fixture();
+        let reader = Reader::configure(
+            definitions.path(),
+            true,
+            vec!["taurus/boolean".to_string()],
+            Some("2.0.0".to_string()),
+        );
+
+        let features = reader.read_features().expect("read features");
+
+        assert_eq!(features.len(), 1);
+        assert!(features[0].data_types.is_empty());
+        assert!(features[0].flow_types.is_empty());
+        assert!(features[0].functions.is_empty());
+        assert!(features[0].runtime_functions.is_empty());
     }
 }
