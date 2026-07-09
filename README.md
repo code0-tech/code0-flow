@@ -11,4 +11,4 @@ Internal Rust library for CodeZero execution services (Aquila, Draco, Taurus). I
 - `flow_service` push definitions to Aquila via gRPC (depends on `flow_definition`)
 - `flow_config` env helpers and `.env` loading
 - `flow_health` tonic health service with NATS readiness
-
+- `flow_telemetry` helpers for Open Telemetry

@@ -7,11 +7,11 @@ pub fn env_with_default<T: FromStr + Debug>(key: &str, default: T) -> T {
     match std::env::var(key) {
         Ok(string) => match T::from_str(&string) {
             Ok(value) => {
-                log::info!("Found env: {} with value: {:?}", key, &value);
+                log::info!("Found env: {} with value: {:?}", key, value);
                 value
             }
             Err(_) => {
-                log::warn!("Failed to parse env: {} with value: {:?}", key, &string);
+                log::warn!("Failed to parse env: {} with value: {:?}", key, string);
                 default
             }
         },
@@ -99,7 +99,7 @@ mod tests {
         }
 
         let result = env_with_default(key, false);
-        assert_eq!(result, true);
+        assert!(result);
 
         unsafe {
             env::remove_var(key);
@@ -114,7 +114,7 @@ mod tests {
         }
 
         let result = env_with_default(key, true);
-        assert_eq!(result, false);
+        assert!(!result);
 
         unsafe {
             env::remove_var(key);
@@ -141,7 +141,7 @@ mod tests {
         }
 
         let result = env_with_default(key, false);
-        assert_eq!(result, false);
+        assert!(!result);
 
         unsafe {
             env::remove_var(key);
