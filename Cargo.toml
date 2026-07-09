@@ -8,27 +8,62 @@ homepage = "https://code0.tech"
 license = "Apache-2.0"
 
 [dependencies]
-tucana = { version = "0.0.75", features = ["aquila"] }
-async-trait = "0.1.85"
-log = "0.4.24"
-tonic = "0.14.1"
-dotenv = "0.15.0"
-tonic-health = "0.14.1"
-async-nats = "0.49.0"
-futures-core = "0.3.31"
-regex = "1.11.2"
-serde_json = "1.0.143"
-walkdir = "2.5.0"
-serde = "1.0.228"
-tokio = "1.49.0"
+tucana = { version = "0.0.75", features = ["aquila"], optional = true }
+log = { version = "0.4.24", optional = true }
+tonic = { version = "0.14.1", optional = true }
+dotenv = { version = "0.15.0", optional = true }
+tonic-health = { version = "0.14.1", optional = true }
+async-nats = { version = "0.49.0", optional = true }
+futures-core = { version = "0.3.31", optional = true }
+serde_json = { version = "1.0.143", optional = true }
+walkdir = { version = "2.5.0", optional = true }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+tokio = { version = "1.49.0", optional = true }
+opentelemetry = { version = "0.32.0", features = ["logs", "metrics", "trace"], optional = true }
+opentelemetry-appender-tracing = { version = "0.32.0", optional = true }
+opentelemetry-otlp = { version = "0.32.0", features = ["grpc-tonic", "logs", "metrics", "trace"], optional = true }
+opentelemetry_sdk = { version = "0.32.1", features = ["logs", "metrics", "rt-tokio", "trace"], optional = true }
+tracing = { version = "0.1.41", features = ["log"], optional = true }
+tracing-opentelemetry = { version = "0.33.0", optional = true }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"], optional = true }
 
 [lib]
 doctest = true
 
 [features]
-default = ["all"]
-flow_definition = []
-flow_service = ["flow_definition"]
-flow_config = []
-flow_health = []
-all = ["flow_definition", "flow_config", "flow_health", "flow_service"]
+default = []
+flow_definition = [
+    "dep:log",
+    "dep:serde",
+    "dep:serde_json",
+    "dep:tucana",
+    "dep:walkdir",
+]
+flow_service = [
+    "flow_definition",
+    "dep:log",
+    "dep:tokio",
+    "dep:tonic",
+    "dep:tucana",
+]
+flow_config = [
+    "dep:dotenv",
+    "dep:log",
+]
+flow_health = [
+    "dep:async-nats",
+    "dep:futures-core",
+    "dep:tonic",
+    "dep:tonic-health",
+]
+flow_telemetry = [
+    "dep:opentelemetry",
+    "dep:opentelemetry-appender-tracing",
+    "dep:opentelemetry-otlp",
+    "dep:opentelemetry_sdk",
+    "dep:serde",
+    "dep:tracing",
+    "dep:tracing-opentelemetry",
+    "dep:tracing-subscriber",
+]
+all = ["flow_definition", "flow_config", "flow_health", "flow_service", "flow_telemetry"]
