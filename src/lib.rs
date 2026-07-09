@@ -9,3 +9,6 @@ pub mod flow_health;
 
 #[cfg(feature = "flow_service")]
 pub mod flow_service;
+
+#[cfg(feature = "flow_telemetry")]
+pub mod flow_telemetry;
