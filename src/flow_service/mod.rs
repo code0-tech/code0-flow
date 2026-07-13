@@ -168,6 +168,7 @@ mod tests {
             definition_data_types: Vec::new(),
             configurations: Vec::new(),
             definitions: Vec::new(),
+            definition_source: identifier.to_string(),
         }
     }
 

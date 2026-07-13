@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod error;
 mod feature;
 
@@ -53,7 +55,7 @@ impl LoadedModule {
         }
 
         Module {
-            identifier: self.config.identifier,
+            identifier: self.config.identifier.clone(),
             name: self.config.name,
             description: self.config.description,
             documentation: self.config.documentation,
@@ -67,6 +69,7 @@ impl LoadedModule {
             definition_data_types: self.data_types,
             configurations: self.configurations,
             definitions: self.definitions,
+            definition_source: self.config.identifier,
         }
     }
 }
